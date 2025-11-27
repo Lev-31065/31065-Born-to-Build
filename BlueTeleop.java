@@ -261,18 +261,18 @@ public class BlueTeleOp extends LinearOpMode {
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         aprilTagDetectionMethod();
-        
-        
+
+
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.addLine("If the auto messed up press start");
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
         telemetry.update();
 
 
@@ -390,7 +390,7 @@ public class BlueTeleOp extends LinearOpMode {
                 }
             }
             correctedHeading = otosAngleDegrees - headingOffset;
-
+            
 
             if(aprilId == 20 && detected == true){
                 currentAngle = 90 - (aprilAngle + 45);
@@ -450,7 +450,7 @@ public class BlueTeleOp extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            
+
             telemetry.addLine("");
             telemetry.addData("aprilX", aprilX);
             telemetry.addLine("");
