@@ -1,0 +1,1439 @@
+/*
+Copyright 2025 FIRST Tech Challenge Team 31065
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
+
+import android.util.Size;
+
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+
+import com.qualcomm.robotcore.hardware.Servo;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.List;
+
+import android.app.Activity;
+import android.graphics.Color;
+import android.view.View;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.SwitchableLight;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * This file contains a minimal example of an iterative (Non-Linear) "OpMode". An OpMode is a
+ * 'program' that runs in either the autonomous or the TeleOp period of an FTC match. The names
+ * of OpModes appear on the menu of the FTC Driver Station. When an selection is made from the
+ * menu, the corresponding OpMode class is instantiated on the Robot Controller and executed.
+ *
+ * Remove the @Disabled annotation on the next line or two (if present) to add this OpMode to the
+ * Driver Station OpMode list, or add a @Disabled annotation to prevent this OpMode from being
+ * added to the Driver Station.
+ */
+@Autonomous
+
+public class BlueAutoV3 extends LinearOpMode {
+    
+    
+       private DistanceSensor sensorDistance;
+
+          private DistanceSensor sensorDistance2;
+          
+    /* Declare OpMode members. */
+    // Blackboard keys for saving position to teleop
+public static final String FINAL_X_KEY = "final_x";
+public static final String FINAL_Y_KEY = "final_y";
+public static final String FINAL_H_KEY = "final_h";
+public static final String FINAL_C_KEY = "final_c";
+    
+     public String color = "none";
+  /** The colorSensor field will contain a reference to our color sensor hardware object */
+  NormalizedColorSensor colorSensor;
+  NormalizedColorSensor colorSensor2;
+  NormalizedColorSensor colorSensor3;
+
+  /** The relativeLayout field is used to aid in providing interesting visual feedback
+   * in this sample application; you probably *don't* need this when you use a color sensor on your
+   * robot. Note that you won't see anything change on the Driver Station, only on the Robot Controller. */
+  View relativeLayout;
+
+  /*
+   * The runOpMode() method is the root of this OpMode, as it is in all LinearOpModes.
+   * Our implementation here, though is a bit unusual: we've decided to put all the actual work
+   * in the runSample() method rather than directly in runOpMode() itself. The reason we do that is
+   * that in this sample we're changing the background color of the robot controller screen as the
+   * OpMode runs, and we want to be able to *guarantee* that we restore it to something reasonable
+   * and palatable when the OpMode ends. The simplest way to do that is to use a try...finally
+   * block around the main, core logic, and an easy way to make that all clear was to separate
+   * the former from the latter in separate methods.
+   */
+
+    
+    
+     SparkFunOTOS myOtos;
+    public ElapsedTime runtime = new ElapsedTime();
+    public ElapsedTime timer = new ElapsedTime();
+            public ElapsedTime armsTimer = new ElapsedTime();
+
+        public ElapsedTime redundancy = new ElapsedTime();
+                public ElapsedTime reset = new ElapsedTime();
+                    TouchSensor touchSensor;  // Touch sensor Object
+
+
+
+
+    
+    private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
+
+  /**
+     * The variable to store our instance of the AprilTag processor.
+     */
+    private AprilTagProcessor aprilTag;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    private VisionPortal visionPortal;
+
+
+    private DcMotor frontLeftDrive = null;
+    private DcMotor backLeftDrive = null;
+    private DcMotor frontRightDrive = null;
+    private DcMotor backRightDrive = null;
+    
+        private DcMotor muncher = null;
+    private DcMotor muncher2 = null;
+    
+    private Servo r1 = null;
+    private Servo r2 = null;
+    private Servo r3 = null;
+    public double releasePos = 1;
+    private DcMotor cat1 = null;
+    private DcMotor cat2 = null;
+  
+    
+
+    public double loadPos = 0.175;
+    
+    public double load1 = 0.7;
+    public double load2 = 0.22;
+    public double load3 = 0.35;
+    
+    public double launch1 = 0.3;
+    public double launch2 = 0.67;
+    public double launch3 = 0.75;
+
+            
+    public double forward = 0;
+    public double right = 0;
+    public double rotate = 0;
+    public double newRight = 0;
+    public double newForward = 0;
+    
+    
+    public double stage = 0;
+    
+    public double otosHeading = 0;
+    
+    public double speed = 0;
+    public double xSpeed = 0;
+    public double ySpeed = 0;
+    private double setSpeed = 1;
+
+
+    public int state = 1;
+    private int targetX = 0;
+    private int targetY = 0;
+    private int targetA = 0;
+    public boolean xReached = false;
+    public boolean yReached = false;
+    public boolean angleReached = false;
+    public int xyMargin = 2;
+    public int rotationMargin = 5;
+    public int cStage = 5;
+    public int cPos = 0;
+    public int cPosCorrected = 0;
+    public int aprilId = 0;
+    public int firingPower = 70;
+    public int reload = -1830;
+    
+    public double distance1 = 0;
+    public double distance2 = 0;
+    
+    public int guideStage = 0;
+    
+    public boolean run21 = false;
+    public boolean run22 = false;
+    public boolean run23 = false;
+    
+    public boolean runOnce = false;
+        public boolean runOnce2 = false;
+
+    public boolean cBack = false;
+
+    
+    public boolean lmr = false;
+    public boolean rml = false;
+    public boolean mrl = false;
+    
+    public String slot1 = "blank";
+    public String slot2 = "blank";
+    public String slot3 = "blank";
+    
+    public boolean override1 = false;
+    public boolean xOverride = false;
+    public boolean yOverride = false;
+    public boolean override = false;
+    public boolean turnOverride = false;
+    private boolean finished = false;
+    
+    public int delayTime = 800;
+    
+     private Servo guideL = null;
+    private Servo guideR = null;
+
+    
+    public double yAdjusted = 0;
+    public double xAdjusted = 0;
+    
+    public int catapultPositionDifference = 0;
+    
+    public double rotationDegrees = 0;
+    
+    public double yOffset = 122.8;
+    public double xOffset = 22.8;
+    
+    public int i = 0;
+    public int j = 0;
+    
+    public String[] motif = {"green", "purple", "purple"};
+    public String[] catColors = {"blank", "blank", "blank"};
+    public String[] newCatColors = {"blank", "blank", "blank"};
+    public String[] CatColors2 = {"blank", "blank", "blank"};
+    public String[] CatColors3 = {"blank", "blank", "blank"};
+
+
+    @Override
+    public void runOpMode(){
+        
+         // Get a reference to the RelativeLayout so we can later change the background
+    // color of the Robot Controller app to match the hue detected by the RGB sensor.
+    int relativeLayoutId = hardwareMap.appContext.getResources().getIdentifier("RelativeLayout", "id", hardwareMap.appContext.getPackageName());
+    relativeLayout = ((Activity) hardwareMap.appContext).findViewById(relativeLayoutId);
+
+        
+        run21 = false;
+        run22 = false;
+        run23 = false;
+        
+            
+        lmr = false;
+        rml = false;
+        mrl = false;
+        
+           
+        cPos = firingPower;
+        
+        forward = 0;
+        right = 0;
+        rotate = 0;
+        stage = 0;
+        
+    
+
+    /*
+     * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
+     */ 
+        touchSensor = hardwareMap.get(TouchSensor.class, "sensor_touch");
+
+
+           sensorDistance = hardwareMap.get(DistanceSensor.class, "sensor_distance");
+                sensorDistance2 = hardwareMap.get(DistanceSensor.class, "sensor_distance2");
+
+
+        // you can also cast this to a Rev2mDistanceSensor if you want to use added
+        // methods associated with the Rev2mDistanceSensor class.
+        Rev2mDistanceSensor sensorTimeOfFlight = (Rev2mDistanceSensor) sensorDistance;
+        Rev2mDistanceSensor sensorTimeOfFlight2 = (Rev2mDistanceSensor) sensorDistance2;
+
+
+   
+        frontLeftDrive = hardwareMap.get(DcMotor.class, "LF");
+        backLeftDrive = hardwareMap.get(DcMotor.class, "LB");
+        frontRightDrive = hardwareMap.get(DcMotor.class, "RF");
+        backRightDrive = hardwareMap.get(DcMotor.class, "RB");
+        muncher = hardwareMap.get(DcMotor.class, "M");
+        muncher2 = hardwareMap.get(DcMotor.class, "M2");
+        cat1 = hardwareMap.get(DcMotor.class, "C");
+        cat2 = hardwareMap.get(DcMotor.class, "C2");
+        guideL = hardwareMap.get(Servo.class, "gl");
+        guideR = hardwareMap.get(Servo.class, "gr");
+    
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        
+        cat1.setDirection(DcMotor.Direction.REVERSE);
+        cat2.setDirection(DcMotor.Direction.FORWARD);
+        
+        frontLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
+        cat1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        cat2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        cat1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        cat2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        
+    
+        
+        r1 = hardwareMap.get(Servo.class, "r1");
+        r2 = hardwareMap.get(Servo.class, "r2");
+        r3 = hardwareMap.get(Servo.class, "r3");
+        
+                 String[] motif = null; // Initialize to null or a default value
+                // String[] catColors = null;
+                 String[] newCatColors = null; // Initialize to null or a default value
+                 String[] CatColors2 = null; // Initialize to null or a default value
+                 String[] CatColors3 = null; // Initialize to null or a default value
+
+
+        xReached = true;
+        yReached = true;
+        override = false;
+
+         telemetry.addData("forward",forward);
+                            telemetry.addData("right", right);
+    initAprilTag();
+        
+        // Get a reference to the sensor
+        myOtos = hardwareMap.get(SparkFunOTOS.class, "sensor_otos");
+        
+
+        telemetry.addData("Status", "Initialized");
+        configureOtos();
+
+
+    
+
+    /*
+     * Code to run ONCE when the driver hits PLAY
+     */
+        waitForStart();
+        runtime.reset();
+        redundancy.reset();
+        timer.reset();
+        armsTimer.reset();
+        reset.reset();
+
+        // Loop until the OpMode ends
+        while (opModeIsActive()){
+         
+      telemetryAprilTag();
+
+                // Push telemetry to the Driver Station.
+               // telemetry.update();
+// Save more CPU resources when camera is no longer needed.
+        //  visionPortal.close();
+          // You can give the sensor a gain value, will be multiplied by the sensor's raw value before the
+    // normalized color values are calculated. Color sensors (especially the REV Color Sensor V3)
+    // can give very low values (depending on the lighting conditions), which only use a small part
+    // of the 0-1 range that is available for the red, green, and blue values. In brighter conditions,
+    // you should use a smaller gain than in dark conditions. If your gain is too high, all of the
+    // colors will report at or near 1, and you won't be able to determine what color you are
+    // actually looking at. For this reason, it's better to err on the side of a lower gain
+    // (but always greater than  or equal to 1).
+    float gain = 2;
+
+    // Once per loop, we will update this hsvValues array. The first element (0) will contain the
+    // hue, the second element (1) will contain the saturation, and the third element (2) will
+    // contain the value. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
+    // for an explanation of HSV color.
+    final float[] hsvValues = new float[3];
+
+    // xButtonPreviouslyPressed and xButtonCurrentlyPressed keep track of the previous and current
+    // state of the X button on the gamepad
+    boolean xButtonPreviouslyPressed = false;
+    boolean xButtonCurrentlyPressed = false;
+    
+    // Get a reference to our sensor object. It's recommended to use NormalizedColorSensor over
+    // ColorSensor, because NormalizedColorSensor consistently gives values between 0 and 1, while
+    // the values you get from ColorSensor are dependent on the specific sensor you're using.
+    colorSensor2 = hardwareMap.get(NormalizedColorSensor.class, "ms");
+    colorSensor3 = hardwareMap.get(NormalizedColorSensor.class, "ls");
+    colorSensor = hardwareMap.get(NormalizedColorSensor.class, "rs");
+
+
+    // If possible, turn the light on in the beginning (it might already be on anyway,
+    // we just make sure it is if we can).
+    if (colorSensor instanceof SwitchableLight) {
+      ((SwitchableLight)colorSensor).enableLight(true);
+    }
+
+  
+
+        
+     /*   
+         // Explain basic gain information via telemetry
+      telemetry.addLine("Hold the A button on gamepad 1 to increase gain, or B to decrease it.\n");
+      telemetry.addLine("Higher gain values mean that the sensor will report larger numbers for Red, Green, and Blue, and Value\n");
+
+      // Update the gain value if either of the A or B gamepad buttons is being held
+      if (gamepad1.a) {
+        // Only increase the gain by a small amount, since this loop will occur multiple times per second.
+        gain += 0.005;
+      } else if (gamepad1.b && gain > 1) { // A gain of less than 1 will make the values smaller, which is not helpful.
+        gain -= 0.005;
+     
+
+      // Show the gain value via telemetry
+      telemetry.addData("Gain", gain);
+    */
+      // Tell the sensor our desired gain value (normally you would do this during initialization,
+      // not during the loop)
+      colorSensor.setGain(gain);
+      colorSensor3.setGain(gain);
+      colorSensor2.setGain(gain);
+
+
+      // Check the status of the X button on the gamepad
+      xButtonCurrentlyPressed = gamepad1.x;
+
+      // If the button state is different than what it was, then act
+      if (xButtonCurrentlyPressed != xButtonPreviouslyPressed) {
+        // If the button is (now) down, then toggle the light
+        if (xButtonCurrentlyPressed) {
+          if (colorSensor instanceof SwitchableLight) {
+            SwitchableLight light = (SwitchableLight)colorSensor;
+            light.enableLight(!light.isLightOn());
+          }
+        }
+      }
+      xButtonPreviouslyPressed = xButtonCurrentlyPressed;
+
+      // Get the normalized colors from the sensor
+      NormalizedRGBA colors = colorSensor.getNormalizedColors();
+            NormalizedRGBA colors2 = colorSensor2.getNormalizedColors();
+      NormalizedRGBA colors3 = colorSensor3.getNormalizedColors();
+
+
+      /* Use telemetry to display feedback on the driver station. We show the red, green, and blue
+       * normalized values from the sensor (in the range of 0 to 1), as well as the equivalent
+       * HSV (hue, saturation and value) values. See http://web.archive.org/web/20190311170843/https://infohost.nmt.edu/tcc/help/pubs/colortheory/web/hsv.html
+       * for an explanation of HSV color. */
+
+      // Update the hsvValues array by passing it to Color.colorToHSV()
+      Color.colorToHSV(colors.toColor(), hsvValues);
+/*
+      telemetry.addLine()
+              .addData("Red", "%.3f", colors.red)
+              .addData("Green", "%.3f", colors.green)
+              .addData("Blue", "%.3f", colors.blue)
+                .addData("Red", "%.3f", colors2.red)
+              .addData("Green", "%.3f", colors2.green)
+              .addData("Blue", "%.3f", colors2.blue)
+                .addData("Red", "%.3f", colors3.red)
+              .addData("Green", "%.3f", colors3.green)
+              .addData("Blue", "%.3f", colors3.blue);
+      telemetry.addLine()
+              .addData("Hue", "%.3f", hsvValues[0])
+              .addData("Saturation", "%.3f", hsvValues[1])
+              .addData("Value", "%.3f", hsvValues[2]);
+      telemetry.addData("Alpha", "%.3f", colors.alpha);
+            telemetry.addData("color", color);
+            */
+    /*  if (colors.green > colors.red && colors.green > colors.blue){
+        color = "Green";
+      } else if(colors.blue > colors.red && colors.blue > colors.green) {
+                color = "Purple";
+      }*/
+
+      /* If this color sensor also has a distance sensor, display the measured distance.
+       * Note that the reported distance is only useful at very close range, and is impacted by
+       * ambient light and surface reflectivity. */
+      if (colorSensor instanceof DistanceSensor) {
+      //  telemetry.addData("Distance (cm)", "%.3f", ((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM));
+      }
+
+      telemetry.update();
+
+      // Change the Robot Controller's background color to match the color detected by the color sensor.
+      relativeLayout.post(new Runnable() {
+        public void run() {
+          relativeLayout.setBackgroundColor(Color.HSVToColor(hsvValues));
+        }
+      });
+
+
+          
+            //Color sensor code
+            
+            //Sensor 1
+            if(((DistanceSensor) colorSensor).getDistance(DistanceUnit.CM) < 5){
+                if(colors.red + colors.blue > 2 * colors.green){
+                  slot1 = "purple";
+                }
+                else if(colors.red + colors.blue < 2 * colors.green){
+                  slot1 = "green";
+                }
+            } else{
+                slot1 = "purple";
+            }
+            if(((DistanceSensor) colorSensor2).getDistance(DistanceUnit.CM) < 5){
+                //Sensor 2
+                if(colors2.red + colors2.blue > 2 * colors2.green){
+                  slot2 = "purple";
+                }
+                else if(colors2.red + colors2.blue < 2 * colors2.green){
+                  slot2 = "green";
+                }
+            } else{
+                slot2 = "purple";
+            }
+             if(((DistanceSensor) colorSensor3).getDistance(DistanceUnit.CM) < 9){
+                //Sensor 3
+                if(colors3.red + colors3.blue > 2 * colors3.green){
+                  slot3 = "purple";
+                }
+                else if(colors3.red + colors3.blue < 2 * colors3.green){
+                  slot3 = "green";
+                }
+            } else{
+                slot3 = "purple";
+            }
+             
+            catColors[0] = slot1;
+            catColors[1] = slot2;
+            catColors[2] = slot3;
+    
+            
+            cat1.setPower(1);
+            cat2.setPower(1);
+        
+            
+            cat1.setTargetPosition(cPosCorrected);
+            cat1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+             
+            cat2.setTargetPosition(cPosCorrected-catapultPositionDifference);
+            cat2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            
+            cPosCorrected = cPos + 1830;
+            
+            catapultPositionDifference = cat1.getCurrentPosition()-cat2.getCurrentPosition();
+            
+            distance1 = sensorDistance.getDistance(DistanceUnit.MM);
+            distance2 = sensorDistance2.getDistance(DistanceUnit.MM);
+
+              
+            SparkFunOTOS.Pose2D pos = myOtos.getPosition();   //needs to be before the otosHeading=pos.h
+            otosHeading = pos.h +4.712; // the plus 1.57079632679 is to adjust field centric driving so that it works when the robot is turned 90 degrees starting teleop
+            rotationDegrees = pos.h * (180/3.14);
+           
+           
+            move(pos.x, pos.y, rotationDegrees);
+
+      /*
+      
+      
+      GUIDE:
+      This is assuming that the robot is starting from
+      the far launch zone with the catapult side facing the goal.
+      
+      Positive X input: Forward towards the goals.
+      Negative X input: Backwards towards the far zone.
+      Positive Y input: Sideways towards blue goal.
+      Negative Y input: Sideways towards red goal.
+      
+      */
+           
+            //Detects the aprilTag. It assumes green purple purple after a certain amount of time without detecting the tag.
+            if(stage == 0) {
+                //The positions are set to home                    
+                targetY = 0;
+                targetX = 0;
+
+                detectObelisk();
+                if(redundancy.seconds() > 0.75){
+                    motif = new String[]{"green", "purple", "purple"};
+                    stage = 1;
+                }
+            }
+
+            if(stage == 1){
+
+                angleReached = false;
+                xReached = false;
+
+                // cPos = firingPower;
+                stage = 3;
+                timer.reset();
+            }
+
+            //Moving the robot into launching position
+            if(stage == 3){
+                setSpeed = 0.9;
+                //Move the robot away from the wall
+                targetX = 5;
+                //Turn the robot towards the goal
+                targetA = 22;
+                if(angleReached == true && xReached == true){
+                    stage = 4;
+
+                    //Unwinds the catapults and prepares to launch
+                    cPos = firingPower;
+                    xReached = false;
+                    setSpeed = 1;
+
+                }
+
+            }
+
+            //Checks if the catpault is unwinded
+            if(stage == 4){
+                if(cat1.getCurrentPosition() >= cPosCorrected - 10/* && cat2.getCurrentPosition() >= cPosCorrected*/ ){
+                    stage = 5;
+                    i = 0;
+                    j = 0;
+                    timer.reset();
+
+                    stopDriving();
+
+                }
+            }
+
+            //Fires the catapults
+            if(stage == 5 && timer.seconds() > 0.5){
+
+                stopDriving();
+                //Assumes preload
+                catColors = new String [] {"green", "purple", "purple"};
+                launchCatapults(catColors);
+
+                redundancy.reset();
+                timer.reset();
+
+                angleReached = false;
+                runOnce = false;
+                cBack = false;
+                stage = 6;
+
+
+            }
+            //Turns the robot sideways for intaking
+            if(stage == 6 && timer.seconds() > 0.5){
+
+                targetA = -90;
+
+                reloadCatapults();
+                if(angleReached == true || redundancy.seconds() > 1){
+                    yReached = false;
+                    stage = 7;
+                }
+
+            }
+
+            //Reload the catapults, drives to the first collection position
+            if(stage == 7){
+
+                targetY = 5;
+                targetX = 22;
+                if(cBack == false){
+                    reloadCatapults();
+                }
+                if(xReached == true && yReached == true && cBack == true){
+                    closeServos();
+                    stopDriving();
+
+                    //Wait for the servos to close
+                    sleep(800);
+
+                    xReached = false;
+                    yReached = false;
+                    runOnce2 = false;
+
+                    timer.reset();
+                    redundancy.reset();
+                    armsTimer.reset();
+                    stage = 8;
+                }
+            }
+
+            //Reset catapult encoders, and intake the first set of artifacts
+            if(stage == 8){
+                //Sets the catapult back position
+                if(runOnce2 = false && timer.seconds() > 1){
+                    resetCatapultEncoders();
+                    runOnce2 = true;
+                }
+                //Intake code
+                setSpeed = 0.4;
+                targetY = 45;
+                targetX = 30;
+                xyMargin = 5;
+
+                //intake
+                muncher.setPower(1);
+                muncher2.setPower(1);
+
+                //Activates the guiding arms
+                guideStage = 1;
+                guidingArms();
+
+                //Prepares catpaults for launching
+                if(timer.seconds() > 1.5){
+                    cPos = firingPower;
+                }
+                if((xReached && yReached && cat1.getCurrentPosition() >= cPosCorrected -10 && timer.seconds() > 2.5) || redundancy.seconds() > 4){
+                    stage = 9;
+                    xyMargin = 2;
+                    xReached = false;
+                    yReached = false;
+                    angleReached = false;
+                    setSpeed = 1;
+                    redundancy.reset();
+                    timer.reset();
+
+                }
+            }
+
+            //Moving back to launch zone
+            if(stage == 9){
+                targetY = 0;
+               //Move the robot away from the wall
+                targetX = 5;
+                //Turn the robot towards the goal
+                targetA = 19;
+
+                guidingArms();
+
+
+                if((xReached == true && yReached == true && angleReached == true && guidingArms() && timer.seconds() > 1.5) || redundancy.seconds() > 3){
+                    xReached = false;
+                    yReached = false;
+                    angleReached = false;
+
+                    //Resets the arms to open position
+                    guideL.setPosition(0.097);
+                    guideR.setPosition(0.93);
+
+                    stage = 10;
+                    redundancy.reset();
+                    timer.reset();
+                }
+            }
+            
+            if(stage == 10){
+
+                closeServos();
+                stage = 11;
+
+                stopDriving();
+                timer.reset();
+
+            }
+            
+            //Launch catapults a second time
+            if(stage == 11){
+                
+                //Eject
+                muncher.setPower(-1);
+                muncher2.setPower(-1);
+
+                launchCatapults(catColors);
+
+                muncher.setPower(0);
+                muncher2.setPower(0);
+
+                angleReached = false;
+                runOnce = false;
+                cBack = false;
+                //  stage = 12;
+                redundancy.reset();
+                stage = 12;
+
+
+
+            }
+
+            //Pull the catpaults back and turn sideways
+            if(stage == 12){
+                targetA = -90;
+                reloadCatapults();
+                if(angleReached == true || redundancy.seconds() > 1.5){
+                    // xReached = false;
+                    yReached = false;
+                    xReached = false;
+                    stage = 13;
+                    redundancy.reset();
+
+                }
+        
+            }
+
+            //Line up with the seconds set of artifacts
+            if(stage == 13){
+
+
+                //og
+                xyMargin = 3;
+                //pasted
+                targetY = 10;
+                targetX = 55;
+//done
+
+                if(cBack == false){
+                    reloadCatapults();
+                }
+                if((xReached == true && yReached == true && cBack == true) || redundancy.seconds() > 1.5){
+
+                    closeServos();
+                    stopDriving();
+
+                    sleep(800);
+
+                    xReached = false;
+                    yReached = false;
+                    runOnce2 = false;
+
+                    timer.reset();
+                    redundancy.reset();
+                    armsTimer.reset();
+                    stage = 14;
+                }
+            }
+            //intake the seconds set of artifacts
+            if(stage == 14){
+
+                setSpeed = 0.5;
+                targetY = 45;
+                targetX = 55;
+                xyMargin = 3;
+
+                if(runOnce2 = false && timer.seconds() > 1){
+                    resetCatapultEncoders();
+                    runOnce2 = true;
+                }
+
+
+                //intake
+                muncher.setPower(1);
+                muncher2.setPower(1);
+
+                //Activates the guiding arms
+                guideStage = 1;
+                guidingArms();
+                //Prepare catpaults for launching
+                if(timer.seconds() > 1.5){
+                    cPos = firingPower;
+                }
+                if((xReached && yReached && cat1.getCurrentPosition() >= cPosCorrected - 10 && timer.seconds() > 2.5) || redundancy.seconds() > 3){
+                    stage = 15;
+                    xyMargin = 2;
+                    xReached = false;
+                    yReached = false;
+                    angleReached = false;
+                    setSpeed = 1;
+                    redundancy.reset();
+                    timer.reset();
+
+                }
+            }
+            //Return to the launch zone
+            if(stage == 15){
+
+                xyMargin = 2;
+
+                targetX = 10;
+                targetY = 0;
+                targetA = 20;
+
+                //Activates guiding arms
+                guidingArms();
+
+                if((xReached == true && yReached == true && angleReached == true && guidingArms() && timer.seconds() > 4) || redundancy.seconds() > 6)
+                    xReached = false;
+                yReached = false;
+                angleReached = false;
+                stopDriving();
+
+                stage = 16;
+                timer.reset();
+                redundancy.reset();
+                //Guiding arms open positions
+                guideL.setPosition(0.097);
+                guideR.setPosition(0.93);
+            }
+
+            if(stage == 16){
+                closeServos();
+
+
+                if(timer.seconds() > 2){
+                    stage = 17;
+                }
+
+            }
+            
+            //Eject and launch
+            if(stage == 17){
+
+                override1 = false;
+                muncher.setPower(-1);
+                muncher2.setPower(-1);
+                stopDriving();
+
+                launchCatapults(catColors);
+                sleep(500);
+
+                stage = 18;
+            }
+            
+            //Park and stop driving
+            if(stage == 18 || runtime.seconds() > 27){
+                if(finished == false){
+                    finished = true;
+                    yReached = false;
+                    xReached = false;
+                    angleReached = false;
+                }
+                targetA = 0;
+                targetX = 5;
+                targetY = 23;
+                if(yReached && xReached && angleReached){
+                    stopDriving();
+                    stage = -10000000;
+                }
+            }
+
+          
+            // Continuously save position to blackboard (add before telemetry.update())
+            blackboard.put(FINAL_X_KEY, pos.x);
+            blackboard.put(FINAL_Y_KEY, pos.y);
+            blackboard.put(FINAL_H_KEY, pos.h);
+            blackboard.put(FINAL_C_KEY, cat1.getCurrentPosition());
+            
+            
+            
+            telemetry.addData("range", String.format("%.01f mm", sensorDistance.getDistance(DistanceUnit.MM)));
+            telemetry.addData("range", String.format("%.01f mm", sensorDistance2.getDistance(DistanceUnit.MM)));
+
+            telemetry.addData("cBack", cBack);
+            telemetry.addData("sensor1", sensorDistance.getDistance(DistanceUnit.MM));
+            telemetry.addData("sensor2", sensorDistance2.getDistance(DistanceUnit.MM));
+            telemetry.addData("Stage",stage);
+            telemetry.addData("cPos",cPos);
+            telemetry.addData("xAdjusted",xAdjusted);
+            telemetry.addData("aprilId",aprilId);
+            telemetry.addData("cat1 pos", cat1.getCurrentPosition());
+            telemetry.addData("cat2 pos", cat2.getCurrentPosition());
+            telemetry.addData("pos.x",pos.x);
+            telemetry.addData("pos.y",pos.y);
+            telemetry.addData("pos.h",pos.h); 
+            
+                        telemetry.addData("is busy?", cat1.isBusy()); 
+                                                telemetry.addData("cat2 is busy?", cat2.isBusy()); 
+
+
+            
+            telemetry.addData("slot1", slot1);
+            telemetry.addData("slot2", slot2);
+            telemetry.addData("slot3", slot3);
+
+          //  telemetry.addData("Motif 1", motif[0]);
+        //    telemetry.addData("Motif 2", motif[1]);
+          //  telemetry.addData("Motif 3", motif[2]);
+            telemetry.addData("cat 1", catColors[0]);
+            telemetry.addData("cat 2", catColors[1]);
+
+            telemetry.addData("cat 3", catColors[2]);
+            telemetry.addData("rotationDegrees", rotationDegrees);
+            telemetry.addData("targetA", targetA);
+            telemetry.addData("targetX", targetX);
+            telemetry.addData("targetY", targetY);
+
+            telemetry.addData("angleReached", angleReached);
+            telemetry.addData("xReached", xReached);
+            telemetry.addData("yReached", yReached);
+            telemetry.addData("forward",forward);
+            telemetry.addData("right", right);
+            
+           
+
+            telemetry.update();
+        }
+
+}   //end of void runOpMode. Put other voids below here
+
+    private boolean guidingArms() {
+        //Open
+            if(armsTimer.seconds() < 1.5){
+                 guideL.setPosition(0.097);
+                guideR.setPosition(0.93);
+            }
+            //side
+            if(armsTimer.seconds() > 1.5 && armsTimer.seconds() < 2.25){
+                guideL.setPosition(0.097);
+                guideR.setPosition(0.65);
+            }//middle
+            if(armsTimer.seconds() > 2.25 &&  armsTimer.seconds() < 2.75 ){
+                 guideL.setPosition(0.13);
+                guideR.setPosition(0.83);
+            }
+        
+         //side
+            if(armsTimer.seconds() > 2.75 && armsTimer.seconds() < 3.5){
+                guideL.setPosition(0.4);
+                guideR.setPosition(0.93);
+            }
+            //opem
+            if(armsTimer.seconds() > 3.5 && armsTimer.seconds() < 4.5){
+                 guideL.setPosition(0.097);
+                guideR.setPosition(0.93);
+                
+            } else if(armsTimer.seconds() > 4.5){
+                return true;
+            }
+            return false;
+    } //end of guidingArms()
+
+    private void launchCatapults(String[] cColors) {
+       
+        telemetry.addData("cColors", cColors[0]);
+        telemetry.addData("cColors", cColors[1]);
+        telemetry.addData("cColors", cColors[2]);
+    
+        telemetry.addData("motif", motif[0]);
+        telemetry.addData("motif", motif[1]);
+        telemetry.addData("motif", motif[2]);
+    
+        telemetry.update();
+         for (i = 0; i < 3; i++){
+            for (j = 0; j < 3; j++){
+                if (cColors[j] == motif[i]){
+                    if (j == 0){
+                        //fire catapult 1
+                        r1.setPosition(launch1);
+                        cColors[j] = "empty";
+                        sleep(delayTime);
+                    }if (j == 1){
+                        //fire catapult 2
+                         r2.setPosition(launch2);
+                        cColors[j] = "empty";
+                        sleep(delayTime);
+                    }if(j == 2){
+                        //fire catapult 3
+                        r3.setPosition(launch3);
+                        cColors[j] = "empty";
+                        sleep(delayTime);
+                    }
+                    
+                    break;
+                }
+            }
+        }
+        for (i = 0; i < 3; i++){
+            if (cColors[i] != "empty"){
+                if (i == 0){
+                    //fire catapult 1
+                    r1.setPosition(launch1);
+                } else if (i == 1){
+                    //fire catapult 2
+                    r2.setPosition(launch2);
+                } else if(i == 2){
+                    //fire catapult 3
+                    r3.setPosition(launch3);
+                }
+            }
+        }
+    }
+    
+    private void reloadCatapults(){
+        if(runOnce == false){
+            cPos = - 2500;
+            cBack = false;
+            runOnce = true;
+            reset.reset();
+            
+        }
+        
+       // if(reset.seconds() > 0.75 && cBack == false){
+         //   cPos -= 3;
+        //}        
+        if(distance1 > 70 && cBack == false){
+            cPos -= 30;
+        }
+        
+        if(cBack == false && (/*distance1 < 70 || */touchSensor.isPressed()/* && distance2 > 50*/)){
+            reset.reset();
+            cPos = cat1.getCurrentPosition() - 1830;
+            cBack = true;
+        }
+    }
+    
+    private void resetCatapultEncoders(){
+        cat1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        cat2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+    
+     private void stopCatapultMotors(){
+        cat1.setPower(0);
+        cat2.setPower(0);
+    
+    }
+    
+    private void stopDriving(){
+        frontLeftDrive.setPower(0);
+        frontRightDrive.setPower(0);
+        backLeftDrive.setPower(0);
+        backRightDrive.setPower(0);
+    }
+    
+    private void closeServos(){
+        r1.setPosition(load1);
+        r2.setPosition(load2);
+        r3.setPosition(load3);
+    }
+     private void openServos(){
+        r1.setPosition(launch1);
+        r2.setPosition(launch2);
+        r3.setPosition(launch3);
+    }
+     private void move(double xPos, double yPos, double hPos){
+
+
+        speed = Math.abs(Math.abs((hPos - targetA)) / 35 + .1);
+        ySpeed = Math.abs(Math.abs((yPos - targetY)) / 35 + 0.2);
+        xSpeed = Math.abs(Math.abs((xPos - targetX)) / 35 + 0.2);
+        
+        if(rotationDegrees < targetA - 3){
+                rotate = -.3 * speed;
+                angleReached = false;
+    
+        }else if (rotationDegrees > targetA + 3){
+            rotate = 0.3 * speed;
+            angleReached = false;
+        }else{
+            rotate = 0;
+            angleReached = true;
+        }
+   
+        if(xPos > (targetX + xyMargin)){
+            right = 1 * xSpeed * setSpeed;
+            xReached = false;
+
+        }
+        else if(xPos < (targetX - xyMargin)){
+            right = -1 * xSpeed * setSpeed;
+             xReached = false;
+        }else{
+            right = 0;
+            xReached = true;
+        }
+   
+        //yPos self-correct positive (forward):
+        if(yPos > (targetY +xyMargin)){
+            forward =  1 * ySpeed * setSpeed;
+            yReached = false;
+        }
+        else if(yPos < (targetY - xyMargin)){
+            forward = - 1 * ySpeed * setSpeed;
+            yReached = false;
+        }else {
+            forward = 0;
+            yReached = true;
+        }
+   
+
+        double theta = Math.atan2(forward, right);
+        double r = Math.hypot(right, forward);
+    
+        // Second, rotate angle by the angle the robot is pointing
+        theta = AngleUnit.normalizeRadians(theta -
+                otosHeading); //imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+    
+     // Third, convert back to cartesian
+        double newForward = r * Math.sin(theta);
+        double newRight = r * Math.cos(theta);  
+        
+        
+        
+        yAdjusted = yPos - yOffset;
+        xAdjusted = xPos - xOffset;
+        
+        double frontLeftPower = newForward + newRight + rotate;
+        double frontRightPower = newForward - newRight - rotate;
+        double backRightPower = newForward + newRight - rotate;
+        double backLeftPower = newForward - newRight + rotate;
+        
+        frontLeftDrive.setPower(frontLeftPower);
+        frontRightDrive.setPower(frontRightPower);
+        backLeftDrive.setPower(backLeftPower);
+        backRightDrive.setPower(backRightPower);
+                    
+    }
+    
+    
+
+    private void initAprilTag() {
+
+        // Create the AprilTag processor.
+        aprilTag = new AprilTagProcessor.Builder()
+
+            // The following default settings are available to un-comment and edit as needed.
+            //.setDrawAxes(false)
+            //.setDrawCubeProjection(false)
+            //.setDrawTagOutline(true)
+            //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+            //.setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+            //.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+
+            // == CAMERA CALIBRATION ==
+            // If you do not manually specify calibration parameters, the SDK will attempt
+            // to load a predefined calibration for your camera.
+            //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
+            // ... these parameters are fx, fy, cx, cy.
+
+            .build();
+
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second (default)
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second (default)
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        //aprilTag.setDecimation(3);
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera (webcam vs. built-in RC phone camera).
+        if (USE_WEBCAM) {
+            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        } else {
+            builder.setCamera(BuiltinCameraDirection.BACK);
+        }
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        //builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableLiveView(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(aprilTag);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Disable or re-enable the aprilTag processor at any time.
+        //visionPortal.setProcessorEnabled(aprilTag, true);
+
+    }   // end method initAprilTag()
+
+    private void detectObelisk(){
+          if (aprilId == 21) {
+                // 2. Assign the value to the existing variable (no 'String[]' keyword)
+                motif = new String[]{"green", "purple", "purple"};
+                stage = 1;
+            } else if (aprilId == 22) { // Use 'else if' for cleaner, more efficient code
+                motif = new String[]{"purple", "green", "purple"};
+              // motif.splice(0, 1,"green")
+              // motif[1] = "green";
+                stage = 1;
+            } else if (aprilId == 23) {
+                motif = new String[]{"purple", "purple", "green"};
+                stage = 1;
+            }
+    }
+   
+    
+    public void configureOtos() {
+        telemetry.addLine("Configuring OTOS...");
+        telemetry.update();
+
+        // Set the desired units for linear and angular measurements. Can be either
+        // meters or inches for linear, and radians or degrees for angular. If not
+        // set, the default is inches and degrees. Note that this setting is not
+        // persisted in the sensor, so you need to set at the start of all your
+        // OpModes if using the non-default value.
+        // myOtos.setLinearUnit(DistanceUnit.METER);
+        myOtos.setLinearUnit(DistanceUnit.INCH);
+        myOtos.setAngularUnit(AngleUnit.RADIANS);
+        //myOtos.setAngularUnit(AngleUnit.DEGREES);
+
+        // Assuming you've mounted your sensor to a robot and it's not centered,
+        // you can specify the offset for the sensor relative to the center of the
+        // robot. The units default to inches and degrees, but if you want to use
+        // different units, specify them before setting the offset! Note that as of
+        // firmware version 1.0, these values will be lost after a power cycle, so
+        // you will need to set them each time you power up the sensor. For example, if
+        // the sensor is mounted 5 inches to the left (negative X) and 10 inches
+        // forward (positive Y) of the center of the robot, and mounted 90 degrees
+        // clockwise (negative rotation) from the robot's orientation, the offset
+        // would be {-5, 10, -90}. These can be any value, even the angle can be
+        // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
+        SparkFunOTOS.Pose2D offset = new SparkFunOTOS.Pose2D(0, 0, 0);
+        myOtos.setOffset(offset);
+
+        // Here we can set the linear and angular scalars, which can compensate for
+        // scaling issues with the sensor measurements. Note that as of firmware
+        // version 1.0, these values will be lost after a power cycle, so you will
+        // need to set them each time you power up the sensor. They can be any value
+        // from 0.872 to 1.127 in increments of 0.001 (0.1%). It is recommended to
+        // first set both scalars to 1.0, then calibrate the angular scalar, then
+        // the linear scalar. To calibrate the angular scalar, spin the robot by
+        // multiple rotations (eg. 10) to get a precise error, then set the scalar
+        // to the inverse of the error. Remember that the angle wraps from -180 to
+        // 180 degrees, so for example, if after 10 rotations counterclockwise
+        // (positive rotation), the sensor reports -15 degrees, the required scalar
+        // would be 3600/3585 = 1.004. To calibrate the linear scalar, move the
+        // robot a known distance and measure the error; do this multiple times at
+        // multiple speeds to get an average, then set the linear scalar to the
+        // inverse of the error. For example, if you move the robot 100 inches and
+        // the sensor reports 103 inches, set the linear scalar to 100/103 = 0.971
+        myOtos.setLinearScalar(1.0);
+        myOtos.setAngularScalar(1.0);
+
+        // The IMU on the OTOS includes a gyroscope and accelerometer, which could
+        // have an offset. Note that as of firmware version 1.0, the calibration
+        // will be lost after a power cycle; the OTOS performs a quick calibration
+        // when it powers up, but it is recommended to perform a more thorough
+        // calibration at the start of all your OpModes. Note that the sensor must
+        // be completely stationary and flat during calibration! When calling
+        // calibrateImu(), you can specify the number of samples to take and whether
+        // to wait until the calibration is complete. If no parameters are provided,
+        // it will take 255 samples and wait until done; each sample takes about
+        // 2.4ms, so about 612ms total
+        myOtos.calibrateImu();
+
+        // Reset the tracking algorithm - this resets the position to the origin,
+        // but can also be used to recover from some rare tracking errors
+        myOtos.resetTracking();
+
+        // After resetting the tracking, the OTOS will report that the robot is at
+        // the origin. If your robot does not start at the origin, or you have
+        // another source of location information (eg. vision odometry), you can set
+        // the OTOS location to match and it will continue to track from there.
+        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(0, 0, 0);
+        myOtos.setPosition(currentPosition);
+
+        // Get the hardware and firmware version
+        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
+        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
+        myOtos.getVersionInfo(hwVersion, fwVersion);
+
+        telemetry.addLine("OTOS configured! Press start to get position data!");
+        telemetry.addLine();
+        telemetry.addLine(String.format("OTOS Hardware Version: v%d.%d", hwVersion.major, hwVersion.minor));
+        telemetry.addLine(String.format("OTOS Firmware Version: v%d.%d", fwVersion.major, fwVersion.minor));
+        telemetry.update();
+    }
+    
+    
+    private void telemetryAprilTag() {
+
+        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+       // telemetry.addData("# AprilTags Detected", currentDetections.size());
+
+        // Step through the list of detections and display info for each one.
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+               // telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
+            //    telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+              //  telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+            //    telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
+            } else {
+              //  telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
+                //telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
+            }
+            aprilId = detection.id;
+        }   // end for() loop
+        
+
+        // Add "key" information to telemetry
+      //  telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        //telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        //telemetry.addLine("RBE = Range, Bearing & Elevation");
+
+    }   // end method telemetryAprilTag()
+    
+    
+
+}   // end class
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
