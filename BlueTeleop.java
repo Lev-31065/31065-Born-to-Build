@@ -375,7 +375,7 @@ public class BlueTeleOp extends LinearOpMode {
             catapult.setTargetPosition(cPosCorrected);
             catapult.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            catapult2.setTargetPosition(cPosCorrected+catapultPositionDifference);
+            catapult2.setTargetPosition(cPosCorrected-catapultPositionDifference);
             catapult2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             cPosCorrected = cPos + 1870;
@@ -449,9 +449,9 @@ public class BlueTeleOp extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            telemetry.addData("c1current pos", catapult.getCurrentPositon());
-            telemetry.addData("c2current pos", catapult2.getCurrentPositon());
-            elemetry.addData("catapultPositionDifference", catapultPositionDifference);
+            telemetry.addData("c1current pos", catapult.getCurrentPosition());
+            telemetry.addData("c2current pos", catapult2.getCurrentPosition());
+            telemetry.addData("catapultPositionDifference", catapultPositionDifference);
             telemetry.addLine("");
             telemetry.addData("aprilX", aprilX);
             telemetry.addLine("");
@@ -472,7 +472,7 @@ public class BlueTeleOp extends LinearOpMode {
             telemetry.addLine("");
             telemetry.addData("launchPowerClamped", launchPowerClamped);
             telemetry.addLine("");
-            telemetry.addLine("aprilId", aprilId);
+            telemetry.addData("aprilId", aprilId);
             telemetry.addLine("");
             telemetry.addLine("");
             telemetry.addData("TargetA", TargetA);
@@ -488,7 +488,10 @@ public class BlueTeleOp extends LinearOpMode {
             telemetry.addData("OTOS pos.h", pos.h);
             telemetry.addData("cPos",cPos);
             telemetry.addData("catapult.getCurrentPosition()", catapult.getCurrentPosition());
+            telemetry.addData("catapult2.getCurrentPosition()", catapult2.getCurrentPosition());
             telemetry.addLine("");
+            telemetry.addData("catapult1getTargetPosition", catapult.getTargetPosition());
+            telemetry.addData("catapult2getTargetPosition", catapult2.getTargetPosition());
             telemetry.addLine("");
             telemetry.addData("cState",cState);
             telemetry.addData("yaw (auto turn power)", yaw);
