@@ -159,6 +159,7 @@ public class BlueTeleOp extends LinearOpMode {
     public int j = 0;
     public double aprilX = 0;
     public double aprilY = 0;
+    public int catapultPositionDifference = 0;
 
 
 
@@ -308,7 +309,7 @@ public class BlueTeleOp extends LinearOpMode {
             xAdjusted = pos.x + xOffset;
 
 
-            //savedC = (int) blackboard.getOrDefault(FINAL_C_KEY, 0.0);
+           
 
 
             telemetry.addLine("Press B to reset robot position and angle at starting position");
@@ -321,6 +322,13 @@ public class BlueTeleOp extends LinearOpMode {
             telemetry.addLine("driver press A to auto aim");
             telemetry.addLine("");
             telemetry.addLine("");
+            telemetry.addData("aprilX", aprilX);
+            telemetry.addLine("");
+            telemetry.addData("aprilY", aprilY);
+            telemetry.addLine("");
+            telemetry.addData("aprilAngle", aprilAngle);
+            telemetry.addLine("");
+            telemetry.addLine("");
 
             /*
             if(gamepad2.start){ // in the case of an auto faliure
@@ -330,9 +338,7 @@ public class BlueTeleOp extends LinearOpMode {
 
             // press B to reset the robot position to where you ideally end auto
             if (gamepad2.b) {
-                imu.resetYaw();
-                myOtos.calibrateImu();
-                myOtos.resetTracking();
+                configureOtos();
             }
 
 
@@ -366,14 +372,18 @@ public class BlueTeleOp extends LinearOpMode {
             }
 
 
-            catapult.setTargetPosition(cPos + 1870);
+            catapult.setTargetPosition(cPosCorrected);
             catapult.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            catapult2.setTargetPosition(cPos + 1870);
+            catapult2.setTargetPosition(cPosCorrected+catapultPositionDifference);
             catapult2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             cPosCorrected = cPos + 1870;
-
+            
+            catapultPositionDifference = catapult.getCurrentPosition()-catapult2.getCurrentPosition();
+            
+            
+            
             if(touchSensor.isPressed()){
                 cBack = true;
             }
@@ -390,34 +400,23 @@ public class BlueTeleOp extends LinearOpMode {
                 }
             }
             correctedHeading = otosAngleDegrees - headingOffset;
-            
+
 
             if(aprilId == 20 && detected == true){
                 currentAngle = 90 - (aprilAngle + 45);
 
             }else if (aprilId != 20 || detected == false){
                 currentAngle = otosAngleDegrees;
-
-
             }
             if(gamepad1.x){
                 launchLeft();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();}
             if(gamepad1.y){
                 launchMiddle();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();}
             if(gamepad1.b){
                 launchRight();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();} 
             if(gamepad1.left_bumper){ //THE BIG BANG - Shoot all three
                 bigBang(); //release all
             }
@@ -450,7 +449,9 @@ public class BlueTeleOp extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-
+            telemetry.addData("c1current pos", catapult.getCurrentPositon());
+            telemetry.addData("c2current pos", catapult2.getCurrentPositon());
+            elemetry.addData("catapultPositionDifference", catapultPositionDifference);
             telemetry.addLine("");
             telemetry.addData("aprilX", aprilX);
             telemetry.addLine("");
@@ -1023,8 +1024,8 @@ public class BlueTeleOp extends LinearOpMode {
                 aprilId = detection.id;
                 detected = true;
                 aprilAngle =  detection.ftcPose.yaw;
-                aprilX = detection.ftcPose.x;
-                aprilY = detection.ftcPose.y;
+                aprilY = detection.ftcPose.x;
+                aprilX = detection.ftcPose.y;
             } else {
                 aprilId = detection.id;
                 detected = false;
