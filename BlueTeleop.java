@@ -110,12 +110,12 @@ public class BlueTeleOp extends LinearOpMode {
     private boolean cat1Launched = false;
     private boolean cat2Launched = false;
     private boolean cat3Launched = false;
-   
+
     private boolean cPosOverride = false;
-   
+
     private boolean lessThan = false;
     private boolean greaterThan = false;
-   
+
     private boolean runOnce = false;
     private boolean setCatTimerAndPosition = false;
 
@@ -227,9 +227,6 @@ public class BlueTeleOp extends LinearOpMode {
 
 
 
-
-
-
         frontLeftDrive = hardwareMap.get(DcMotor.class, "LF");
         frontRightDrive = hardwareMap.get(DcMotor.class, "RF");
         backLeftDrive = hardwareMap.get(DcMotor.class, "LB");
@@ -275,11 +272,6 @@ public class BlueTeleOp extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.addLine("If the auto messed up press start");
 
-
-
-
-
-
         telemetry.update();
 
 
@@ -315,7 +307,7 @@ public class BlueTeleOp extends LinearOpMode {
             xAdjusted = pos.x + xOffset;
 
 
-           
+
 
 
             telemetry.addLine("Press B to reset robot position and angle at starting position");
@@ -346,9 +338,6 @@ public class BlueTeleOp extends LinearOpMode {
             if (gamepad2.b) {
                 configureOtos();
             }
-           
-
-           
 
             catapultControl();
 
@@ -364,7 +353,7 @@ public class BlueTeleOp extends LinearOpMode {
             }else{
                 driveSpeed = 1;
             }
-   
+
 
             catapult.setTargetPosition(cPosCorrected);
             catapult.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -373,10 +362,10 @@ public class BlueTeleOp extends LinearOpMode {
             catapult2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             cPosCorrected = cPos + 1870;
-           
+
             catapultPositionDifference = catapult.getCurrentPosition()-catapult2.getCurrentPosition();
-           
-           
+
+
             double distance1 = sensorDistance.getDistance(DistanceUnit.MM);
             double distance2 = sensorDistance2.getDistance(DistanceUnit.MM);
 
@@ -386,9 +375,9 @@ public class BlueTeleOp extends LinearOpMode {
             }
 
 
-       
 
-         
+
+
             if(gamepad1.x){
                 launchLeft();
                 cTimer.reset();}
@@ -421,20 +410,20 @@ public class BlueTeleOp extends LinearOpMode {
             }
 
             intakeAndGuideServos();
-           
-           
+
+
             otosAngleDegrees = pos.h * (180/3.14); // convert the otos angle to degrees
-           
+
             if(aprilId == 20 && detected == true){
                 currentAngle = 90 - (aprilAngle + 45);
             }else{
                 currentAngle = otosAngleDegrees;
             }
-           
+
             TargetA = (90 - ((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(yAdjusted)))))) + rotationOffset; // calculate target angle
             autoTurnSpeed = Math.abs(Math.abs((currentAngle - TargetA)) / 65 + .1);
 
-             if(gamepad2.a){ //AUTO AIM
+            if(gamepad2.a){ //AUTO AIM
                 autoAim();
             }else if(gamepad1.right_bumper){
                 constantAngleAim(pos.x, pos.y, pos.h);
@@ -447,8 +436,7 @@ public class BlueTeleOp extends LinearOpMode {
                     driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed));
                 }
             }
-
-            // Show the elapsed game time and wheel power.
+            .
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
             telemetry.addData("c1current pos", catapult.getCurrentPosition());
@@ -465,7 +453,7 @@ public class BlueTeleOp extends LinearOpMode {
             telemetry.addData("currentAngle", currentAngle);
             telemetry.addLine("");
             telemetry.addData("autoTurnSpeed", autoTurnSpeed);
-           
+
             telemetry.addData("greaterThan", greaterThan);
             telemetry.addData("lessThan", lessThan);
             telemetry.addData("detected", detected);
@@ -671,14 +659,14 @@ public class BlueTeleOp extends LinearOpMode {
                 headingOffset = otosAngleDegrees - ( (aprilAngle + 45));
             }
         }*/
-       
+
         correctedHeading = otosAngleDegrees - headingOffset;
 
 
-       //else if (aprilId != 20 || detected == false){
-           // currentAngle = otosAngleDegrees;
-    //    }
-           
+        //else if (aprilId != 20 || detected == false){
+        // currentAngle = otosAngleDegrees;
+        //    }
+
        /* TargetA = (90 - ((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(xAdjusted)))))) + rotationOffset; // calculate target angle
         autoTurnSpeed = Math.abs(Math.abs((otosAngleDegrees - TargetA)) / 45 + .1);
 */
@@ -1054,11 +1042,11 @@ public class BlueTeleOp extends LinearOpMode {
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
                 // telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-               // telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-            //    telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                // telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                //    telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 //    telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
                 aprilId = detection.id;
-               // detected = true;
+                // detected = true;
                 aprilAngle =  detection.ftcPose.yaw;
                 aprilY = detection.ftcPose.x;
                 aprilX = detection.ftcPose.y;
@@ -1067,19 +1055,19 @@ public class BlueTeleOp extends LinearOpMode {
                 //  telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 //telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
-           
-           
+
+
         }   // end for() loop
-            if(currentDetections.size() > 0){
-                detected = true;
-            }else if(currentDetections.size() <= 0){
-                detected = false;
-            }
+        if(currentDetections.size() > 0){
+            detected = true;
+        }else if(currentDetections.size() <= 0){
+            detected = false;
+        }
 
         // Add "key" information to telemetry
-  //      telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-    //    telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-      //  telemetry.addLine("RBE = Range, Bearing & Elevation");
+        //      telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        //    telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        //  telemetry.addLine("RBE = Range, Bearing & Elevation");
 
     }   // end method aprilTagDetectionMethod()
 
