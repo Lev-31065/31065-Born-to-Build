@@ -71,56 +71,17 @@ import java.util.Date;
 
 
 public class RedTeleOp extends LinearOpMode {
-
-
     private static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
-
-    /**
-     * The variable to store our instance of the AprilTag processor.
-     */
     private AprilTagProcessor aprilTag;
-
-    /**
-     * The variable to store our instance of the vision portal.
-     */
     private VisionPortal visionPortal;
     View relativeLayout;
-
     private DistanceSensor sensorDistance;
-
     private DistanceSensor sensorDistance2;
     TouchSensor touchSensor;  // Touch sensor Object
-
-
-
-
-    // Blackboard keys for retrieving position from autonomous
-    private double savedX = -117.0;
-    private double savedY = -23.0;
-    private double savedH = 0.0;
-    private double savedC = 0;
-    public static final String FINAL_X_KEY = "final_x";
-    public static final String FINAL_Y_KEY = "final_y";
-    public static final String FINAL_H_KEY = "final_h";
-    public static final String FINAL_C_KEY = "final_c";
-
-
-    SparkFunOTOS myOtos;
-    public double otosHeading = 0;
-
-
-    // This declares the IMU needed to get the current direction the robot is facing
-    IMU imu;
-
-
-    // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime cTimer = new ElapsedTime();
     private ElapsedTime cTimer2 = new ElapsedTime();
     public ElapsedTime redundancy = new ElapsedTime();
-
-
-
     DcMotor frontLeftDrive = null;
     DcMotor backLeftDrive = null;
     DcMotor frontRightDrive = null;
@@ -129,23 +90,19 @@ public class RedTeleOp extends LinearOpMode {
     private DcMotor catapult2 = null;
     private DcMotor muncher = null;
     private DcMotor muncher2 = null;
-
-
     private Servo release1 = null;
     private Servo release2 = null;
     private Servo release3 = null;
     private Servo guideL = null;
     private Servo guideR = null;
+    IMU imu;
+    SparkFunOTOS myOtos;
+
+    //Variables, will be used in code, not for setting
+    public double otosHeading = 0;
     public double currentAngle = 0;
-
-    private int correctedPosition = 0;
-
-
-    private int catOffset = 0;
     private int cState = 1;
     public boolean detected = false;
-
-    private int angle = 45;
     private double launchPower = 0;
     private double launchPowerClamped = 0; // makes sure it is in between 0 and 1
     private double TargetA = 0;
@@ -153,63 +110,68 @@ public class RedTeleOp extends LinearOpMode {
     private boolean cat1Launched = false;
     private boolean cat2Launched = false;
     private boolean cat3Launched = false;
+
+    private boolean cPosOverride = false;
+
+    private boolean lessThan = false;
+    private boolean greaterThan = false;
+
     private boolean runOnce = false;
-    private boolean runOnce2 = false;
+    private boolean setCatTimerAndPosition = false;
 
     public double yaw = 0;
     private double axial = 0;
     private double lateral = 0;
     private int cPos = 0;
     private int cPosCorrected = 0;
-
     public int aprilId = 0;
     public double aprilAngle = 0;
-
 
     private boolean shotAll = false;
     private boolean cBack = false;
     private boolean autoAiming = false;
     private double otosAngleDegrees = 0;
-    public double headingOffset = 0;
-    public double correctedHeading = 0;
-
 
     private double driveSpeed = 1;
     private double hyp = 0;
     public double rotate = 0;
+    public double headingOffset = 0;
+    public double correctedHeading = 0;
+
+    //variables but could be changed
+    private double savedX = -117.0;
+    private double savedY = -23.0;
+    private double savedH = 0.0;
+    private double savedC = 0;
+    public static final String FINAL_X_KEY = "final_x";
+    public static final String FINAL_Y_KEY = "final_y";
+    public static final String FINAL_H_KEY = "final_h";
+    public static final String FINAL_C_KEY = "final_c";
+    private int catOffset = 0;
     public double xOffset = 0;
     public double yOffset = 0;
     public double rotationOffset = 0;
-
-
-
 
     //These are the offset position values
     public double yAdjusted = 0;
     public double xAdjusted = 0;
     private double hypOffset = 0;
     private double driverHypOffset = 0;
-
-
-
-    public double closeLaunchRatio = 1.75; // increase this variable if you want to have more power in the close zone, and decrease for less. Default is 1, launch power would be linear, increasing as you get further from the goal.
-
-
-
-
-
+    private boolean slowModeBoolean = false;
+    private boolean lastLeftBumper = false;
     public String[] motif = {"green", "purple", "purple"};
     public String[] catColors = {"blank", "blank", "blank"};
-
-
     public int i = 0;
     public int j = 0;
+    public double aprilX = 0;
+    public double aprilY = 0;
+    public int catapultPositionDifference = 0;
 
 
-    public double launch1 = 0.3;
-    public double launch2 = 0.67;
-    public double launch3 = 0.75;
 
+    //variables for changing
+    public double closeLaunchRatio = 1.7; // increase this variable if you want to have more power in the close zone, and decrease for less. Default is 1, launch power would be linear, increasing as you get further from the goal.
+    public double catapultPositionMultiplier = 1.4;
 
 
 
@@ -264,15 +226,10 @@ public class RedTeleOp extends LinearOpMode {
 
 
 
-
-
-
         frontLeftDrive = hardwareMap.get(DcMotor.class, "LF");
         frontRightDrive = hardwareMap.get(DcMotor.class, "RF");
         backLeftDrive = hardwareMap.get(DcMotor.class, "LB");
         backRightDrive = hardwareMap.get(DcMotor.class, "RB");
-
-
 
 
         // We set the left motors in reverse which is needed for drive trains where the left
@@ -307,12 +264,13 @@ public class RedTeleOp extends LinearOpMode {
         backLeftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-
+        aprilTagDetectionMethod();
 
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.addLine("IF THE AUTO MESSED UP AND YOU ENDED IT WITH DIFFERENT POSITIONS THAN IDEAL, THE DRIVER CAN PRESS START AT THE BEGGINING OF THE MATCH BEFORE MOVING AT ALL TO LOAD LAST POSITION FROM AUTO");
+
         telemetry.update();
 
 
@@ -332,30 +290,39 @@ public class RedTeleOp extends LinearOpMode {
         catapult2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         catapult.setPower(1);
         catapult2.setPower(1);
-        runOnce = false;
+        release1.setPosition(0.3);
+        release2.setPosition(0.67);
+        release3.setPosition(0.75);
+
 
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-
-            if(runOnce == false){
-                release1.setPosition(0.3);
-                release2.setPosition(0.67);
-                release3.setPosition(0.75);
-                runOnce = true;
-            }
-            telemetryAprilTag();
-
-            //savedC = (int) blackboard.getOrDefault(FINAL_C_KEY, 0.0);
-
+            aprilTagDetectionMethod();
+            //BLUE SPECIFIC
             SparkFunOTOS.Pose2D pos = myOtos.getPosition();   //needs to be before the otosHeading=pos.h
             otosHeading = pos.h + 4.71; // the plus 1.57079632679 is to adjust field centric driving so that it works when the robot is turned 90 degrees starting teleop
+            //This code is for offsetting the pos.x and pos.y values (not really, just gets them into variables?)
+            yAdjusted = pos.y + yOffset;
+            xAdjusted = pos.x + xOffset;
 
-
-            telemetry.addLine("Press B to reset robot position and angle");
+            telemetry.addLine("Press B to reset robot position and angle at starting position");
+            telemetry.addLine("");
             telemetry.addLine("Hold left bumper to drive in robot relative");
-            telemetry.addLine("IF THE AUTO MESSED UP AND YOU ENDED IT WITH DIFFERENT POSITIONS THAN IDEAL, THE DRIVER CAN PRESS START AT THE BEGGINING OF THE MATCH BEFORE MOVING AT ALL TO LOAD LAST POSITION FROM AUTO");
-
+            telemetry.addLine("If the auto messed up press start on the driver");
+            telemetry.addLine("");
+            telemetry.addLine("driver press right bumper to toggle slow mode");
+            telemetry.addLine("");
+            telemetry.addLine("driver press A to auto aim");
+            telemetry.addLine("");
+            telemetry.addLine("");
+            telemetry.addData("aprilX", aprilX);
+            telemetry.addLine("");
+            telemetry.addData("aprilY", aprilY);
+            telemetry.addLine("");
+            telemetry.addData("aprilAngle", aprilAngle);
+            telemetry.addLine("");
+            telemetry.addLine("");
 /*
        if(gamepad2.start){ // in the case of an auto faliure
            SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(savedX, savedY, savedH);
@@ -364,197 +331,55 @@ public class RedTeleOp extends LinearOpMode {
 
             // press B to reset the robot position to where you ideally end auto
             if (gamepad2.b) {
-                imu.resetYaw();
-                myOtos.calibrateImu();
-                myOtos.resetTracking();
+                configureOtos();
             }
 
+            catapultControl();
 
-            if(gamepad2.a){ //AUTO AIM
-                autoAim();
-            }else if(gamepad1.right_bumper){
-                constantAngleAim(pos.x, pos.y, pos.h);
-            }
+            //toggle slow mode
+            boolean currentLeftBumper = gamepad2.right_bumper;
+            if (currentLeftBumper && !lastLeftBumper) {
+                slowModeBoolean = !slowModeBoolean; }
+            lastLeftBumper = currentLeftBumper;
 
-            else { //drive normally
-                if (gamepad2.left_bumper) {
-                    // If you press the left bumper, you get a drive from the point of view of the robot
-                    // (much like driving an RC vehicle)
-                    drive((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), (0.8*gamepad2.right_stick_x*driveSpeed));
-                } else {
-                    driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed));
-                }
-            }
-
-
-            //CODE TO RUN CONSTANTLY - code block:
-            guideServoStuff();
-
-
-
-
-            //This code is for offsetting the pos.x and pos.y values
-            yAdjusted = pos.y + yOffset;
-            xAdjusted = pos.x + xOffset;
-
-
-
-
-
-
-            if(gamepad1.back){ // for final base park
+            if(slowModeBoolean == true || gamepad1.dpad_down){ // for final base park
                 driveSpeed = 0.4;
             }else{
                 driveSpeed = 1;
             }
 
 
-            catapult.setTargetPosition(cPos + 1870);
+            catapult.setTargetPosition(cPosCorrected);
             catapult.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            catapult2.setTargetPosition(cPos + 1870);
+            catapult2.setTargetPosition(cPosCorrected-catapultPositionDifference);
             catapult2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             cPosCorrected = cPos + 1870;
 
+            catapultPositionDifference = catapult.getCurrentPosition()-catapult2.getCurrentPosition();
 
-            // cPosCorrected = cPos - catOffset;
+
+            double distance1 = sensorDistance.getDistance(DistanceUnit.MM);
+            double distance2 = sensorDistance2.getDistance(DistanceUnit.MM);
 
 
-            if(touchSensor.isPressed()/*&& sensorDistance.getDistance(DistanceUnit.MM) < 60 && sensorDistance2.getDistance(DistanceUnit.MM) > 39*/){
-                /*(catapult.getCurrentPosition() < cPosCorrected - catOffset && catapult.getCurrentPosition()> cPosCorrected - 10) &&*/
+            if(/*touchSensor.isPressed() || */distance2 < 100){
                 cBack = true;
-
-            }
-
-
-            //allow auto pull back if all three are lauched or if the operator overrides by pressing a
-            if((gamepad1.a || (cat1Launched && cat2Launched && cat3Launched)) && cTimer.seconds() > 0.250){
-                cState = 1;
             }
 
 
 
 
-
-            //auto pullback
-            if(cState == 1){
-
-
-                //open up the ones that were launched
-                if (cat1Launched){
-                    release1.setPosition(0.3);}
-                if (cat2Launched){
-                    release2.setPosition(0.67);}
-                if (cat3Launched){
-                    release3.setPosition(0.75);}
-                cat1Launched = false;
-                cat2Launched = false;
-                cat3Launched = false;
-                //pull it back
-                cPos = -5000;
-                cState = 2;
-                redundancy.reset();
-                runOnce2 = false;
-
-
-            } if((cState == 2 && cBack == true) || (redundancy.seconds() > 3 && cState == 2)){
-                //lock in place
-                if(runOnce2 == false){
-                    runOnce2 = true;
-                    cPos = catapult.getCurrentPosition() - 1840;
-                    redundancy.reset();
-                }
-
-                release1.setPosition(0.7);
-                release2.setPosition(0.22);
-                release3.setPosition(0.35);
-                if(redundancy.seconds() > 0.8){
-                    catapult.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    catapult2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    cPos = 0;
-                    cState = 3;
-                    cTimer2.reset();
-                    redundancy.reset();
-                }
-
-
-            }
-
-
-            if(cState == 3){
-                cBack = false;
-
-                if(cTimer2.seconds() > 0.75){
-                    cPos = (int) Math.round( -1860 + (1860 * launchPowerClamped));
-                }
-
-
-                hyp = Math.sqrt(Math.abs(((xAdjusted * xAdjusted)) + ((yAdjusted * yAdjusted)))) + hypOffset + driverHypOffset; // calculate the hypotenuse (distance to the goal)
-
-
-                if(hyp >50){
-                    //launchPower will create a decimal ranging from 0 to 1, which corresponds to the amount  the catapults pull back.
-                    launchPower = (hyp/130);
-                }else{
-                    //launchPower will create a decimal ranging from 0 to 1, which corresponds to the amount  the catapults pull back.
-                    launchPower = ((hyp/130) * closeLaunchRatio) ;
-                }
-                launchPowerClamped = Math.max(0.0, Math.min(1.0, launchPower)); //.min picks the smaller, meaning no values more than 1. .max picks bigger meaning none less than 0.
-
-
-                if (gamepad2.dpad_up || gamepad1.dpad_up){
-                    catOffset -= 25;
-                }
-                if (gamepad2.dpad_down){
-                    catOffset += 25;
-                }
-                if(gamepad2.right_bumper){
-                    if(gamepad2.dpad_up){
-                        driverHypOffset -= 1;
-                    }
-                    if(gamepad2.dpad_down){
-                        driverHypOffset += 1;
-                    }
-
-
-                }
-            }
-
-            if(aprilId == 20){
-                if(otosAngleDegrees >  90 - (aprilAngle + 45)){
-                    headingOffset = otosAngleDegrees - ( (aprilAngle + 45));
-                }
-            }
-            correctedHeading = otosAngleDegrees - headingOffset;
-
-
-            if(aprilId == 20 && detected == true){
-                currentAngle = 90 - (aprilAngle + 45);
-
-            }else if (aprilId != 20 || detected == false){
-                currentAngle = otosAngleDegrees;
-
-
-            }
             if(gamepad1.x){
                 launchLeft();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();}
             if(gamepad1.y){
                 launchMiddle();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();}
             if(gamepad1.b){
                 launchRight();
-                cTimer.reset();
-            }
-
-
+                cTimer.reset();}
             if(gamepad1.left_bumper){ //THE BIG BANG - Shoot all three
                 bigBang(); //release all
             }
@@ -565,17 +390,6 @@ public class RedTeleOp extends LinearOpMode {
             }
 
 
-            //intake and spit
-            if(gamepad1.right_trigger > 0.2 || gamepad2.right_trigger > 0.2){
-                muncher.setPower(1);
-                muncher2.setPower(1);
-            } else if (gamepad1.left_trigger > 0.2 || gamepad2.left_trigger > 0.2){
-                muncher.setPower(-1);
-                muncher2.setPower(-1);
-            } else {
-                muncher.setPower(0);
-                muncher2.setPower(0);
-            }
 
 
             //reset all offsets to 0
@@ -588,18 +402,57 @@ public class RedTeleOp extends LinearOpMode {
                 yOffset=0;
             }
 
+            intakeAndGuideServos();
 
 
             otosAngleDegrees = pos.h * (180/3.14); // convert the otos angle to degrees
 
+            if(aprilId == 20 && detected == true){
+                currentAngle = 90 - (aprilAngle + 45);
+            }else{
+                currentAngle = otosAngleDegrees;
+            }
+
+            TargetA = (((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(yAdjusted)))))-90) + rotationOffset; // calculate target angle
+            autoTurnSpeed = Math.abs(Math.abs((currentAngle - TargetA)) / 65 + .1);
+
+            if(gamepad2.a){ //AUTO AIM
+                autoAim();
+            }else if(gamepad1.right_bumper){
+                constantAngleAim(pos.x, pos.y, pos.h);
+            } else { //drive normally
+                if (gamepad2.left_bumper) {
+                    // If you press the left bumper, you get a drive from the point of view of the robot
+                    // (much like driving an RC vehicle)
+                    drive((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), (0.8*gamepad2.right_stick_x*driveSpeed));
+                } else {
+                    driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed));
+                }
+            }
 
 
 
-            // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
 
-            telemetry.addData("currentAngle", currentAngle);
+            telemetry.addData("c1current pos", catapult.getCurrentPosition());
+            telemetry.addData("c2current pos", catapult2.getCurrentPosition());
+            telemetry.addData("catapultPositionDifference", catapultPositionDifference);
+            telemetry.addLine("");
+            telemetry.addData("aprilX", aprilX);
+            telemetry.addLine("");
+            telemetry.addData("aprilY", aprilY);
+            telemetry.addLine("");
+            telemetry.addData("aprilAngle", aprilAngle);
+            telemetry.addLine("");
 
+            telemetry.addData("currentAngle", currentAngle);
+            telemetry.addLine("");
+            telemetry.addData("autoTurnSpeed", autoTurnSpeed);
+
+            telemetry.addData("greaterThan", greaterThan);
+            telemetry.addData("lessThan", lessThan);
+            telemetry.addData("detected", detected);
+            telemetry.addLine("");
             telemetry.addData("pos.x", pos.x);
             telemetry.addLine("");
             telemetry.addData("pos.y", pos.y);
@@ -609,6 +462,9 @@ public class RedTeleOp extends LinearOpMode {
             telemetry.addData("launchPower", launchPower);
             telemetry.addLine("");
             telemetry.addData("launchPowerClamped", launchPowerClamped);
+            telemetry.addLine("");
+            telemetry.addData("aprilId", aprilId);
+            telemetry.addLine("");
             telemetry.addLine("");
             telemetry.addData("TargetA", TargetA);
             telemetry.addData("correctedHeading", correctedHeading);
@@ -623,7 +479,10 @@ public class RedTeleOp extends LinearOpMode {
             telemetry.addData("OTOS pos.h", pos.h);
             telemetry.addData("cPos",cPos);
             telemetry.addData("catapult.getCurrentPosition()", catapult.getCurrentPosition());
+            telemetry.addData("catapult2.getCurrentPosition()", catapult2.getCurrentPosition());
             telemetry.addLine("");
+            telemetry.addData("catapult1getTargetPosition", catapult.getTargetPosition());
+            telemetry.addData("catapult2getTargetPosition", catapult2.getTargetPosition());
             telemetry.addLine("");
             telemetry.addData("cState",cState);
             telemetry.addData("yaw (auto turn power)", yaw);
@@ -635,19 +494,9 @@ public class RedTeleOp extends LinearOpMode {
             telemetry.addData("cBack",cBack);
 
 
-
             telemetry.update();
         }
     }
-
-
-
-
-
-
-
-
-    // This routine drives the robot field relative
     private void driveFieldRelative(double forward, double right, double rotate) {
         // First, convert direction being asked to drive to polar coordinates
 
@@ -704,20 +553,137 @@ public class RedTeleOp extends LinearOpMode {
         backLeftDrive.setPower(maxSpeed * (backLeftPower / maxPower));
         backRightDrive.setPower(maxSpeed * (backRightPower / maxPower));
     }
+    public void catapultControl(){
+
+        //allow auto pull back if all three are lauched or if the operator overrides by pressing a
+        if((gamepad1.a || (cat1Launched && cat2Launched && cat3Launched)) && cTimer.seconds() > 0.250){
+            cState = 1;
+        }
+
+        //auto pullback
+        if(cState == 1){
+
+
+            //open up the ones that were launched
+            if (cat1Launched){
+                release1.setPosition(0.3);}
+            if (cat2Launched){
+                release2.setPosition(0.67);}
+            if (cat3Launched){
+                release3.setPosition(0.75);}
+            cat1Launched = false;
+            cat2Launched = false;
+            cat3Launched = false;
+            //pull it back
+            cPos = -8000;
+            cState = 2;
+            redundancy.reset();
+            setCatTimerAndPosition = false;
+
+
+        }  if((cState == 2 && cBack == true) || (redundancy.seconds() > 3 && cState == 2)){
+            //lock in place
+            if(setCatTimerAndPosition == false){
+                setCatTimerAndPosition = true;
+                cPos = catapult2.getCurrentPosition() -(int) Math.round(1840*catapultPositionMultiplier);
+                redundancy.reset();
+            }
+
+            release1.setPosition(0.7);
+            release2.setPosition(0.22);
+            release3.setPosition(0.35);
+            if(redundancy.seconds() > 0.8){
+                catapult.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                catapult2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                cPos = 0;
+                cState = 3;
+                cTimer2.reset();
+                redundancy.reset();
+            }
+
+
+        }
+
+
+        if(cState == 3){
+            cBack = false;
+            if(cTimer2.seconds() > 0.5){
+                cPos = (int) Math.round( (-1860*catapultPositionMultiplier) + ((1860*catapultPositionMultiplier) * launchPowerClamped));
+            }
+
+
+            hyp = Math.sqrt(Math.abs(((xAdjusted * xAdjusted)) + ((yAdjusted * yAdjusted)))) + hypOffset + driverHypOffset; // calculate the hypotenuse (distance to the goal)
+
+
+            if(hyp > 95){
+                //launchPower will create a decimal ranging from 0 to 1, which corresponds to the amount  the catapults pull back.
+                launchPower = (1.5);
+            }else{
+                //launchPower will create a decimal ranging from 0 to 1, which corresponds to the amount  the catapults pull back.
+                launchPower = ((hyp/140) * closeLaunchRatio) ;
+            }
+            launchPowerClamped = Math.max(0.0, Math.min(1.5, launchPower)); //.min picks the smaller, meaning no values more than 1. .max picks bigger meaning none less than 0.
+
+
+            if (gamepad2.dpad_up || gamepad1.dpad_up){
+                catOffset -= 25;
+            }
+            if (gamepad2.dpad_down){
+                catOffset += 25;
+            }
+            if(gamepad2.right_bumper){
+                if(gamepad2.dpad_up){
+                    driverHypOffset -= 1;
+                }
+                if(gamepad2.dpad_down){
+                    driverHypOffset += 1;
+                }
+
+
+            }
+        }
+
+
+    }
     public void autoAim(){
 
+        /*if(aprilId == 20){
+            if(otosAngleDegrees >  90 - (aprilAngle + 45)){
+                headingOffset = otosAngleDegrees - ( (aprilAngle + 45));
+            }
+        }*/
 
-        TargetA = (((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(yAdjusted)))))-90) + rotationOffset; // calculate target angle
-        autoTurnSpeed = Math.abs(Math.abs((otosAngleDegrees - TargetA)) / 50 + .1);
+        correctedHeading = otosAngleDegrees - headingOffset;
+
+
+        //else if (aprilId != 20 || detected == false){
+        // currentAngle = otosAngleDegrees;
+        //    }
+
+       /* TargetA = (90 - ((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(xAdjusted)))))) + rotationOffset; // calculate target angle
+        autoTurnSpeed = Math.abs(Math.abs((otosAngleDegrees - TargetA)) / 45 + .1);
+*/
         driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), yaw);
 
+        telemetry.addData("autoTurnSpeed", autoTurnSpeed);
+        telemetry.addData("TargetA", TargetA);
+        telemetry.addData("greaterThan", greaterThan);
+        telemetry.addData("lessThan", lessThan);
+        telemetry.update();
 
-        if(currentAngle  > TargetA + 3){
-            yaw = .67 * autoTurnSpeed;
-        }else if (currentAngle < TargetA - 3){
-            yaw = -0.67 * autoTurnSpeed;
+
+        if(currentAngle < TargetA - 3){
+            yaw = -.67 * autoTurnSpeed;
+            lessThan = true;
+            greaterThan = false;
+        }else if (currentAngle > TargetA + 3){
+            yaw = 0.67 * autoTurnSpeed;
+            lessThan = false;
+            greaterThan = true;
         }else{
             yaw = 0;
+            lessThan = false;
+            greaterThan = false;
         }
 
 
@@ -732,7 +698,6 @@ public class RedTeleOp extends LinearOpMode {
 
     }
 
-
     private void constantAngleAim(double xPos, double yPos, double hPos){
 
 
@@ -744,9 +709,9 @@ public class RedTeleOp extends LinearOpMode {
         }
 
         if(currentAngle < TargetA - 3){
-            yaw = .67 * autoTurnSpeed;
+            yaw = -.67 * autoTurnSpeed;
         }else if (currentAngle > TargetA + 3){
-            yaw = -0.67 * autoTurnSpeed;
+            yaw = 0.67 * autoTurnSpeed;
         }else{
             yaw = 0;
         }
@@ -795,17 +760,17 @@ public class RedTeleOp extends LinearOpMode {
                 if (cColors[j] == motif[i]){
                     if (j == 0){
                         //fire catapult 1
-                        release1.setPosition(launch1);
+                        release1.setPosition(0.3);
                         cColors[j] = "empty";
                         sleep(700);
                     }if (j == 1){
                         //fire catapult 2
-                        release2.setPosition(launch2);
+                        release2.setPosition(0.67);
                         cColors[j] = "empty";
                         sleep(700);
                     }if(j == 2){
                         //fire catapult 3
-                        release3.setPosition(launch3);
+                        release3.setPosition(0.75);
                         cColors[j] = "empty";
                         sleep(700);
                     }
@@ -819,57 +784,91 @@ public class RedTeleOp extends LinearOpMode {
             if (cColors[i] != "empty"){
                 if (i == 0){
                     //fire catapult 1
-                    release1.setPosition(launch1);
+                    release1.setPosition(0.3);
                 } else if (i == 1){
                     //fire catapult 2
-                    release2.setPosition(launch2);
+                    release2.setPosition(0.67);
                 } else if(i == 2){
                     //fire catapult 3
-                    release3.setPosition(launch3);
+                    release3.setPosition(0.75);
                 }
             }
         }
     }
-    public void guideServoStuff(){
+    public void intakeAndGuideServos(){
+
+        //intake and spit
+        if(gamepad1.right_trigger > 0.2 || gamepad2.right_trigger > 0.2){
+            //intake
+            muncher.setPower(1);
+            muncher2.setPower(1);
+        } else if (gamepad1.left_trigger > 0.2 || gamepad2.left_trigger > 0.2){
+            //spit
+            muncher.setPower(-1);
+            muncher2.setPower(-1);
+            //whack by closing
+            guideL.setPosition(0.45);
+            guideR.setPosition(0.6);
+        } else {
+            //no power, stop
+            muncher.setPower(0);
+            muncher2.setPower(0);
+        }
+
 
 
         if(otosHeading > -0.3 ){
             //intake guide servo code for when the intake is faced towards the drive team
-            if (gamepad1.right_stick_y<-0.6){
+            if (gamepad1.left_trigger > 0.2 || gamepad2.left_trigger > 0.2){
+                //spit
+                muncher.setPower(-1);
+                muncher2.setPower(-1);
+                //whack by closing
+                guideL.setPosition(0.45);
+                guideR.setPosition(0.6);
+            } else if (gamepad1.right_stick_y<-0.4){
                 //Middle (eject)
-                guideL.setPosition(0.35);
-                guideR.setPosition(0.692);
-            }else if(gamepad1.right_stick_x>-0.4 && gamepad1.right_stick_x<0.4 ){
+                guideL.setPosition(0.3);
+                guideR.setPosition(0.742);
+            } else if(gamepad1.right_stick_x>-0.4 && gamepad1.right_stick_x<0.4 ){
                 //open
                 guideL.setPosition(0.097);
                 guideR.setPosition(0.93);
-            } else if (gamepad1.right_stick_x<-0.6){
+            } else if (gamepad1.right_stick_x<-0.4){
                 //side
                 guideL.setPosition(0.097);
                 guideR.setPosition(0.65);
-            } else if (gamepad1.right_stick_x>0.6){
+            } else if (gamepad1.right_stick_x>0.4){
                 //side
                 guideL.setPosition(0.4);
                 guideR.setPosition(0.93);
             }
         } else {
-            if (gamepad1.right_stick_y>0.6){
+            if (gamepad1.left_trigger > 0.2 || gamepad2.left_trigger > 0.2) {
+                //spit
+                muncher.setPower(-1);
+                muncher2.setPower(-1);
+                //whack by closing
+                guideL.setPosition(0.45);
+                guideR.setPosition(0.6);
+            } else if (gamepad1.right_stick_y>0.4){
                 guideL.setPosition(0.35);
                 guideR.setPosition(0.692);
-            }else if(gamepad1.right_stick_x>-0.4 && gamepad1.right_stick_x<0.4 ){
+            } else if(gamepad1.right_stick_x>-0.4 && gamepad1.right_stick_x<0.4 ){
+                //open
                 guideL.setPosition(0.097);
                 guideR.setPosition(0.93);
-            } else if (gamepad1.right_stick_x>0.6){
+            } else if (gamepad1.right_stick_x>0.4){
                 guideL.setPosition(0.097);
                 guideR.setPosition(0.65);
-            } else if (gamepad1.right_stick_x<-0.6){
+            } else if (gamepad1.right_stick_x<-0.4){
                 guideL.setPosition(0.4);
                 guideR.setPosition(0.93);
             }
         }
+    }//end of void intakeAndGuideServoStuff
 
 
-    }//end of void guideServoStuff
 
     private void initAprilTag() {
 
@@ -1012,7 +1011,7 @@ public class RedTeleOp extends LinearOpMode {
         // savedX = (double) blackboard.getOrDefault(FINAL_X_KEY, -117.0);
         // savedY = (double) blackboard.getOrDefault(FINAL_Y_KEY, -23.0);
         //savedH = (double) blackboard.getOrDefault(FINAL_H_KEY, 0.0);
-        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(-117, 23, 0);
+        SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(-117, -23, 0);
         myOtos.setPosition(currentPosition);
 
 
@@ -1028,8 +1027,7 @@ public class RedTeleOp extends LinearOpMode {
         telemetry.addLine(String.format("OTOS Firmware Version: v%d.%d", fwVersion.major, fwVersion.minor));
         telemetry.update();
     }//end of configureOtos()
-
-    private void telemetryAprilTag() {
+    private void aprilTagDetectionMethod() {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         // telemetry.addData("# AprilTags Detected", currentDetections.size());
@@ -1038,47 +1036,33 @@ public class RedTeleOp extends LinearOpMode {
         for (AprilTagDetection detection : currentDetections) {
             if (detection.metadata != null) {
                 // telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
-                telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
+                // telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x, detection.ftcPose.y, detection.ftcPose.z));
+                //    telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw));
                 //    telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
                 aprilId = detection.id;
-                detected = true;
+                // detected = true;
                 aprilAngle =  detection.ftcPose.yaw;
+                aprilY = detection.ftcPose.x;
+                aprilX = detection.ftcPose.y;
             } else {
                 aprilId = detection.id;
-                detected = false;
                 //  telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
                 //telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
             }
 
-        }   // end for() loop
-        detected = false;
 
+        }   // end for() loop
+        if(currentDetections.size() > 0){
+            detected = true;
+        }else if(currentDetections.size() <= 0){
+            detected = false;
+        }
 
         // Add "key" information to telemetry
-        telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
-        telemetry.addLine("RBE = Range, Bearing & Elevation");
+        //      telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
+        //    telemetry.addLine("PRY = Pitch, Roll & Yaw (XYZ Rotation)");
+        //  telemetry.addLine("RBE = Range, Bearing & Elevation");
 
-    }   // end method telemetryAprilTag()
+    }   // end method aprilTagDetectionMethod()
 
 }//End of class
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
