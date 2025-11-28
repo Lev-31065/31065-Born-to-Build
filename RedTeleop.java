@@ -364,9 +364,9 @@ public class RedTeleOp extends LinearOpMode {
             double distance2 = sensorDistance2.getDistance(DistanceUnit.MM);
 
 
-            if(/*touchSensor.isPressed() || */distance2 < 100){
-                cBack = true;
-            }
+           // if(/*touchSensor.isPressed() || */distance2 < 100){
+          //      cBack = true;
+          //  }
 
 
 
@@ -408,10 +408,11 @@ public class RedTeleOp extends LinearOpMode {
             otosAngleDegrees = pos.h * (180/3.14); // convert the otos angle to degrees
 
             if(aprilId == 20 && detected == true){
-                currentAngle = 90 - (aprilAngle + 45);
+                currentAngle = 90 - (aprilAngle - 60);
             }else{
                 currentAngle = otosAngleDegrees;
             }
+            
 
             TargetA = (((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(yAdjusted)))))-90) + rotationOffset; // calculate target angle
             autoTurnSpeed = Math.abs(Math.abs((currentAngle - TargetA)) / 65 + .1);
@@ -575,7 +576,7 @@ public class RedTeleOp extends LinearOpMode {
             cat2Launched = false;
             cat3Launched = false;
             //pull it back
-            cPos = -8000;
+            cPos = -20000;
             cState = 2;
             redundancy.reset();
             setCatTimerAndPosition = false;
@@ -697,15 +698,14 @@ public class RedTeleOp extends LinearOpMode {
 
 
     }
-
     private void constantAngleAim(double xPos, double yPos, double hPos){
 
 
         autoTurnSpeed = Math.abs(Math.abs((otosAngleDegrees - TargetA)) / 65 + .1);
         if(xPos < -70){
-            TargetA = 23 * -1;
+            TargetA = 23;
         } else if(xPos >= -70){
-            TargetA = 45 * -1;
+            TargetA = 45;//not times negaqtive one for red
         }
 
         if(currentAngle < TargetA - 3){
