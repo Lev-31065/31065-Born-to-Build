@@ -381,9 +381,9 @@ public class BlueTeleOp extends LinearOpMode {
             double distance2 = sensorDistance2.getDistance(DistanceUnit.MM);
 
 
-            if(/*touchSensor.isPressed() || */distance2 < 100){
-                cBack = true;
-            }
+            //if(/*touchSensor.isPressed() || */distance2 < 100){
+          //     cBack = true;
+           // }
 
 
         
