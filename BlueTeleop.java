@@ -107,9 +107,9 @@ public class BlueTeleOp extends LinearOpMode {
 		private double launchPowerClamped = 0; // makes sure it is in between 0 and 1
 		private double TargetA = 0;
 		private double autoTurnSpeed = 0;
-		private boolean cat1Launched = false;
-		private boolean cat2Launched = false;
-		private boolean cat3Launched = false;
+		private boolean cat1Launched = true;
+		private boolean cat2Launched = true;
+		private boolean cat3Launched = true;
 		
 		private boolean cPosOverride = false;
 		
@@ -424,8 +424,11 @@ public class BlueTeleOp extends LinearOpMode {
 						intakeAndGuideServos();
 						
 						if(aprilId == 20 && detected == true){
-								angleDifference = (90 - (aprilAngle + 60)) - otosAngleDegrees;
+								SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(pos.x, pos.y, aprilAngle);
+								myOtos.setPosition(currentPosition);
+								//angleDifference = (90 - (aprilAngle + 60)) - otosAngleDegrees;
 							//	currentAngle = 90 - (aprilAngle + 60);
+							
 						}/*else{
 								currentAngle = correctedHeading;
 						}*/
@@ -433,7 +436,7 @@ public class BlueTeleOp extends LinearOpMode {
 						otosAngleDegrees = pos.h * (180/3.14); // convert the otos angle to degrees
 						correctedHeading = otosAngleDegrees + angleDifference;
 						
-						currentAngle = correctedHeading;
+						currentAngle = otosAngleDegrees /*correctedHeading*/;
 						
 					
 						
