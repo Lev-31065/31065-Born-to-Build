@@ -445,24 +445,21 @@ public class BlueTeleOp extends LinearOpMode {
 
 					//	 if(gamepad2.y){ //AUTO AIM
 					//			autoAim();
-						//}else 
-						if(gamepad1.right_bumper){
-								constantAngleAim(pos.x, pos.y, pos.h);
-						} else { //drive normally
-								if (gamepad2.left_bumper) {
-										// If you press the left bumper, you get a drive from the point of view of the robot
-										// (much like driving an RC vehicle)
-										drive((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), (0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
-								} else {
-										driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
-								}
-						}
+						
 						
 						if(gamepad2.a){
 								if(aprilId == 20 && detected){
 									autoAprilXAim();
 								}else{
 									autoAim();
+								}
+						} else {
+								if (gamepad2.left_bumper) {
+										// If you press the left bumper, you get a drive from the point of view of the robot
+										// (much like driving an RC vehicle)
+										drive((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), (0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
+								} else {
+										driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
 								}
 						}
 
@@ -654,7 +651,7 @@ public class BlueTeleOp extends LinearOpMode {
 				if(cState == 4){
 						cBack = false;
 						if(cTimer2.seconds() > 0.5){
-									cPos = (int) Math.round(155*Math.pow(1.015,((1.54*(hyp))-15))+1000);
+									cPos = (int) Math.round(155*Math.pow(1.0160,((1.54*(hyp))-15))+750);
 							//	cPos = (int) Math.round( (-1860*catapultPositionMultiplier) + ((1860*catapultPositionMultiplier) * launchPowerClamped));
 						}
 
@@ -743,15 +740,15 @@ public class BlueTeleOp extends LinearOpMode {
 				
 			//	aprilAimOffsetForAngle
 				
-						if(aprilScreenX < 330 && aprilScreenX > 120){
+						if(aprilScreenX < 335 && aprilScreenX > 120){
 							yaw = -0.13;
 						}else if (aprilScreenX < 331){
 						yaw = -0.2;
 						
-						}else if (aprilScreenX > 350 && aprilScreenX < 560){
+						}else if (aprilScreenX > 345 && aprilScreenX < 560){
 						yaw = 0.13;
 						
-						}else if (aprilScreenX > 351){
+						}else if (aprilScreenX > 346){
 						yaw = 0.2;
 						}else {
 						yaw = 0;
