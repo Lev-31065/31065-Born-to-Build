@@ -314,7 +314,7 @@ public class RedTeleOp extends LinearOpMode {
 						aprilTagDetectionMethod();
 						//BLUE SPECIFIC
 						SparkFunOTOS.Pose2D pos = myOtos.getPosition();	 //needs to be before the otosHeading=pos.h
-						otosHeading = pos.h + 1.57079632679; // the plus 1.57079632679 is to adjust field centric driving so that it works when the robot is turned 90 degrees starting teleop
+						otosHeading = pos.h + 1.57079632679 + 3.1415; // the plus 1.57079632679 is to adjust field centric driving so that it works when the robot is turned 90 degrees starting teleop
 						//This code is for offsetting the pos.x and pos.y values (not really, just gets them into variables?)
 						yAdjusted = pos.y + yOffset;
 						xAdjusted = pos.x + xOffset;
@@ -456,20 +456,24 @@ public class RedTeleOp extends LinearOpMode {
 					//	 if(gamepad2.y){ // AUTO AIM
 					//			autoAim();
 					//	}else
-						if(gamepad1.right_bumper){
+						/*if(gamepad1.right_bumper){
 								constantAngleAim(pos.x, pos.y, pos.h);
-						} else { //drive normally
-								if (gamepad2.left_bumper) {
+						}
+						*/
+						if(gamepad2.a){
+							if(aprilId == 24 && detected){
+									autoAprilXAim();
+								}else{
+									autoAim();
+								}
+						} else{
+							if (gamepad2.left_bumper) {
 										// If you press the left bumper, you get a drive from the point of view of the robot
 										// (much like driving an RC vehicle)
 										drive((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), (0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
 								} else {
 										driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed),(0.8*gamepad2.right_stick_x*driveSpeed + 0.3*gamepad1.left_stick_x));
 								}
-						}
-						
-						if(gamepad2.a){
-							autoAprilXAim();
 						}
 
 						// Show the elapsed game time and wheel power.
@@ -660,7 +664,7 @@ public class RedTeleOp extends LinearOpMode {
 				if(cState == 4){
 						cBack = false;
 						if(cTimer2.seconds() > 0.5){
-									cPos = (int) Math.round(155*Math.pow(1.015,((1.54*(hyp))-15))+1000);
+									cPos = (int) Math.round(155*Math.pow(1.0160,((1.54*(hyp))-15))+750);
 							//	cPos = (int) Math.round( (-1860*catapultPositionMultiplier) + ((1860*catapultPositionMultiplier) * launchPowerClamped));
 						}
 
@@ -783,15 +787,19 @@ public class RedTeleOp extends LinearOpMode {
 
 			//	aprilAimOffsetForAngle
 				
-	if(aprilScreenX < 280){
-						yaw = -.8 * autoTurnSpeed;
+	if(aprilScreenX < (305+ 35) && aprilScreenX > (100+ 35)){
+							yaw = -0.13;
+						}else if (aprilScreenX < 306 + 35){
+						yaw = -0.2;
 						
-						}else if (aprilScreenX > 320){
-						yaw = 0.8 * autoTurnSpeed;
+						}else if (aprilScreenX > (315 + 35) && aprilScreenX < (530 + 35)){
+						yaw = 0.13;
 						
-						}else{
+						}else if (aprilScreenX > 316 + 35){
+						yaw = 0.2;
+						}else {
 						yaw = 0;
-						}		
+						}	
 
 				if(gamepad2.dpad_left || gamepad1.left_stick_x > 0.1){
 						rotationOffset += 1;
