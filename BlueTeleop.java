@@ -459,7 +459,11 @@ public class BlueTeleOp extends LinearOpMode {
 						}
 						
 						if(gamepad2.a){
-							autoAprilXAim();
+								if(aprilId == 20 && detected){
+									autoAprilXAim();
+								}else{
+									autoAim();
+								}
 						}
 
 						// Show the elapsed game time and wheel power.
@@ -690,11 +694,11 @@ public class BlueTeleOp extends LinearOpMode {
 		}
 		public void autoAim(){
 
-				if(aprilId == 20 && detected == true){
-						myOtos.resetTracking();
-						SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(xAdjusted, yAdjusted, setAprilAngle);
-						myOtos.setPosition(currentPosition);
-				}
+			//	if(aprilId == 20 && detected == true){
+				//		myOtos.resetTracking();
+				//		SparkFunOTOS.Pose2D currentPosition = new SparkFunOTOS.Pose2D(xAdjusted, yAdjusted, setAprilAngle);
+			//			myOtos.setPosition(currentPosition);
+		//		}
 				telemetry.update();
 				correctedHeading = otosAngleDegrees - headingOffset;
 				driveFieldRelative((-gamepad2.left_stick_y*driveSpeed), (gamepad2.left_stick_x*driveSpeed), yaw);
@@ -739,6 +743,21 @@ public class BlueTeleOp extends LinearOpMode {
 				
 			//	aprilAimOffsetForAngle
 				
+						if(aprilScreenX < 330 && aprilScreenX > 120){
+							yaw = -0.13;
+						}else if (aprilScreenX < 331){
+						yaw = -0.2;
+						
+						}else if (aprilScreenX > 350 && aprilScreenX < 560){
+						yaw = 0.13;
+						
+						}else if (aprilScreenX > 351){
+						yaw = 0.2;
+						}else {
+						yaw = 0;
+						}	
+						
+						/*
 						if(aprilScreenX < 320){
 						yaw = -0.4* autoTurnSpeed;
 						
@@ -747,8 +766,8 @@ public class BlueTeleOp extends LinearOpMode {
 						
 						}else{
 						yaw = 0;
-						}		
-
+						}	
+						*/
 				if(gamepad2.dpad_left || gamepad1.left_stick_x > 0.1){
 						rotationOffset += 1;
 				}
