@@ -199,7 +199,7 @@ public static final String FINAL_C_KEY = "final_c";
 		public int cPos = 0;
 		public int cPosCorrected = 0;
 		public int aprilId = 0;
-		public int firingPower = 1000;
+		public int firingPower = 2400;
 		public int reload = -1830;
 		
 		private double TargetA = 0;
@@ -236,6 +236,7 @@ public static final String FINAL_C_KEY = "final_c";
 		public boolean override = false;
 		public boolean turnOverride = false;
 		private boolean finished = false;
+		private boolean rotateOverride = false;
 		
 		public int delayTime = 800;
 		
@@ -569,7 +570,7 @@ public static final String FINAL_C_KEY = "final_c";
 						cat2.setTargetPosition(cPosCorrected-catapultPositionDifference);
 						cat2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 						
-						cPosCorrected = cPos + 1830; // up is 3740
+						cPosCorrected = cPos; // up is ~ 2500
 						
 						catapultPositionDifference = cat1.getCurrentPosition()-cat2.getCurrentPosition();
 						
@@ -591,8 +592,17 @@ public static final String FINAL_C_KEY = "final_c";
 						TargetA = (90 - ((180/3.14) * (Math.abs(Math.atan((xAdjusted)/(yAdjusted)))))); // calculate target angle
 
 						//drive code
-						move(pos.x, pos.y, rotationDegrees);
-
+						if(rotateOverride == false){
+							move(pos.x, pos.y, rotationDegrees);
+						}
+						
+						if(rotateOverride == true){
+							if(aprilId == 20 && detected == true){
+								move(pos.x, pos.y, 90 - (33+aprilAngle));
+							}else{
+								move(pos.x, pos.y, rotationDegrees);
+							}
+						}
 			/*
 			
 			
@@ -633,13 +643,13 @@ public static final String FINAL_C_KEY = "final_c";
 						//Moving the robot into launching position
 						if(stage == 3){
 								setSpeed = 0.9;
-								//Move the robot away from the wall
-								targetX = 5;
-								//Turn the robot towards the goal
-								targetA = TargetA - 5;
-								if(angleReached == true && xReached == true){
+									xyMargin = 2;
+								rotateOverride = true;
+								targetX = 7;
+								targetY = 0;
+								targetA = TargetA - 3;
+								if(angleReached == true && xReached == true || redundancy.seconds() > 2){
 										stage = 4;
-
 										//Unwinds the catapults and prepares to launch
 										cPos = firingPower;
 										xReached = false;
@@ -673,6 +683,7 @@ public static final String FINAL_C_KEY = "final_c";
 								redundancy.reset();
 								timer.reset();
 
+								rotateOverride = false;
 								angleReached = false;
 								runOnce = false;
 								cBack = false;
@@ -712,6 +723,8 @@ public static final String FINAL_C_KEY = "final_c";
 										yReached = false;
 										runOnce2 = false;
 
+										guideStage = 1;
+
 										timer.reset();
 										redundancy.reset();
 										armsTimer.reset();
@@ -737,14 +750,13 @@ public static final String FINAL_C_KEY = "final_c";
 								muncher2.setPower(1);
 
 								//Activates the guiding arms
-								guideStage = 1;
 								guidingArms();
 
 								//Prepares catpaults for launching
 								if(timer.seconds() > 1.5){
-										cPos = firingPower;
+										cPos = firingPower + 200;
 								}
-								if((xReached && yReached && cat1.getCurrentPosition() >= cPosCorrected -10 && timer.seconds() > 2.5) || redundancy.seconds() > 4){
+								if((xReached && yReached && cat1.getCurrentPosition() >= cPos && timer.seconds() > 1.5) || redundancy.seconds() > 3){
 										stage = 9;
 										xyMargin = 2;
 										xReached = false;
@@ -759,11 +771,12 @@ public static final String FINAL_C_KEY = "final_c";
 
 						//Moving back to launch zone
 						if(stage == 9){
+								xyMargin = 2;
+								rotateOverride = true;
+
+								targetX = 7;
 								targetY = 0;
-							 //Move the robot away from the wall
-								targetX = 5;
-								//Turn the robot towards the goal
-								targetA = 19;
+								targetA = TargetA;
 
 								guidingArms();
 
@@ -794,16 +807,20 @@ public static final String FINAL_C_KEY = "final_c";
 						}
 						
 						//Launch catapults a second time
-						if(stage == 11 && timer.seconds() > 0.5){
+						if(stage == 11 && timer.seconds() > .75){
 								
 								//Eject
 								muncher.setPower(-1);
 								muncher2.setPower(-1);
 
 								launchCatapults(catColors);
-
+								
+								sleep(250);
+								
 								muncher.setPower(0);
 								muncher2.setPower(0);
+
+								rotateOverride = false;
 
 								angleReached = false;
 								runOnce = false;
@@ -820,13 +837,13 @@ public static final String FINAL_C_KEY = "final_c";
 						if(stage == 12){
 								targetA = -90;
 								reloadCatapults();
-								if(angleReached == true || redundancy.seconds() > 1.5){
-										// xReached = false;
+								if(angleReached == true || redundancy.seconds() > 1){
+									telemetry.update();
+									// xReached = false;
 										yReached = false;
 										xReached = false;
 										stage = 13;
 										redundancy.reset();
-
 								}
 				
 						}
@@ -839,16 +856,15 @@ public static final String FINAL_C_KEY = "final_c";
 								xyMargin = 3;
 								//pasted
 								targetY = 10;
-								targetX = 55;
+								targetX = 50;
 //done
-
 								if(cBack == false){
-										reloadCatapults();
+									reloadCatapults();
 								}
-								if(cBack = true){
+								if(cBack == true){
 									closeServos();
 								}
-								if((xReached == true && yReached == true) || redundancy.seconds() > 2){
+								if((xReached == true && yReached == true && cBack == true) || redundancy.seconds() > 2.5){
 
 										closeServos();
 										stopDriving();
@@ -858,22 +874,23 @@ public static final String FINAL_C_KEY = "final_c";
 										yReached = false;
 										runOnce2 = false;
 
+										guideStage = 1;
+
 										timer.reset();
 										redundancy.reset();
 										armsTimer.reset();
 										stage = 14;
 								}
 						}
-						//intake the seconds set of artifacts
+						//intake the second set of artifacts
 						if(stage == 14){
 
 								setSpeed = 0.5;
 								targetY = 45;
-								targetX = 55;
-								xyMargin = 3;
+								targetX = 50;
+								xyMargin = 2;
 
-								if(runOnce2 = false){
-									closeServos();
+								if(runOnce2 = false && timer.seconds() > 0.4){
 										resetCatapultEncoders();
 										runOnce2 = true;
 								}
@@ -882,15 +899,14 @@ public static final String FINAL_C_KEY = "final_c";
 								//intake
 								muncher.setPower(1);
 								muncher2.setPower(1);
-
+								
 								//Activates the guiding arms
-								guideStage = 1;
 								guidingArms();
 								//Prepare catpaults for launching
 								if(timer.seconds() > 0.75){
 										cPos = firingPower;
 								}
-								if((xReached && yReached && cat1.getCurrentPosition() >= cPosCorrected - 10 && timer.seconds() > 2.5) || redundancy.seconds() > 3){
+								if((xReached && yReached && cat1.getCurrentPosition() >= cPos && timer.seconds() > 2.5) || redundancy.seconds() > 3){
 										stage = 15;
 										xyMargin = 2;
 										xReached = false;
@@ -906,33 +922,35 @@ public static final String FINAL_C_KEY = "final_c";
 						if(stage == 15){
 
 								xyMargin = 2;
+								rotateOverride = true;
 
 								targetX = 10;
 								targetY = 0;
-								targetA = 20;
+								targetA = TargetA;
 
 								//Activates guiding arms
 								guidingArms();
 
-								if((xReached == true && yReached == true && angleReached == true && guidingArms() && timer.seconds() > 4) || redundancy.seconds() > 6)
-										xReached = false;
-								yReached = false;
-								angleReached = false;
-								stopDriving();
-
-								stage = 16;
-								timer.reset();
-								redundancy.reset();
-								//Guiding arms open positions
-								guideL.setPosition(0.097);
-								guideR.setPosition(0.93);
+								if((xReached == true && yReached == true && angleReached == true && guidingArms() && timer.seconds() > 3) || redundancy.seconds() > 4){
+									xReached = false;
+									yReached = false;
+									angleReached = false;
+									stopDriving();
+								
+									stage = 16;
+									timer.reset();
+									redundancy.reset();
+									//Guiding arms open positions
+									guideL.setPosition(0.097);
+									guideR.setPosition(0.93);
+							}
 						}
-
+						
 						if(stage == 16){
 								closeServos();
 
 
-								if(timer.seconds() > 2){
+								if(timer.seconds() > 0.5){
 										stage = 17;
 								}
 
@@ -947,13 +965,14 @@ public static final String FINAL_C_KEY = "final_c";
 								stopDriving();
 
 								launchCatapults(catColors);
-								sleep(500);
-
+								sleep(350);
+								
 								stage = 18;
 						}
 						
 						//Park and stop driving
-						if(stage == 18 || runtime.seconds() > 27){
+						if(stage == 18 || runtime.seconds() > 28){
+								rotateOverride = false;
 								if(finished == false){
 										finished = true;
 										yReached = false;
@@ -1018,8 +1037,7 @@ public static final String FINAL_C_KEY = "final_c";
 						telemetry.addData("yReached", yReached);
 						telemetry.addData("forward",forward);
 						telemetry.addData("right", right);
-						
-					 
+						telemetry.addData("redundancy", redundancy.seconds());
 
 						telemetry.update();
 				}
@@ -1028,12 +1046,21 @@ public static final String FINAL_C_KEY = "final_c";
 
 		private boolean guidingArms() {
 				//Open
+				double openL = 0.97;
+				double openR = 0.93;
+				
+				double sweepL = 0.4;
+				double sweepR = 0.65;
+				
+				double middleL = 0.13;
+				double middleR = 0.83;
+				
 						if(armsTimer.seconds() < 1.5){
 								 guideL.setPosition(0.097);
 								guideR.setPosition(0.93);
 						}
 						//side
-						if(armsTimer.seconds() > 1.7 && armsTimer.seconds() < 2.1){
+						if(armsTimer.seconds() > 1.5 && armsTimer.seconds() < 2.5){
 								guideL.setPosition(0.097);
 								guideR.setPosition(0.65);
 						}
@@ -1043,18 +1070,18 @@ public static final String FINAL_C_KEY = "final_c";
 								
 						}
 						//middle
-						if(armsTimer.seconds() > 3.1 && armsTimer.seconds() < 3.7){
+						if(armsTimer.seconds() > 3.1 && armsTimer.seconds() < 3.5){
 								 guideL.setPosition(0.13);
 								guideR.setPosition(0.83);
 						}
 				
 				 //side
-						if(armsTimer.seconds() > 3.7 && armsTimer.seconds() < 4.3){
+						if(armsTimer.seconds() > 3.5 && armsTimer.seconds() < 4.7){
 								guideL.setPosition(0.4);
 								guideR.setPosition(0.93);
 						}
 						//opem
-						if(armsTimer.seconds() > 4.3 && armsTimer.seconds() < 4.9){
+						if(armsTimer.seconds() > 4.7 && armsTimer.seconds() < 4.9){
 								 guideL.setPosition(0.097);
 								guideR.setPosition(0.93);
 								
@@ -1117,7 +1144,7 @@ public static final String FINAL_C_KEY = "final_c";
 		
 		private void reloadCatapults(){
 				if(runOnce == false){
-						cPos = - 2500;
+						cPos = -250;
 						cBack = false;
 						runOnce = true;
 						reset.reset();
@@ -1127,13 +1154,13 @@ public static final String FINAL_C_KEY = "final_c";
 			 // if(reset.seconds() > 0.75 && cBack == false){
 				 //	 cPos -= 3;
 				//}				
-				if(distance1 > 70 && cBack == false){
-						cPos -= 30;
+				if(distance2 > 100 && cBack == false && reset.seconds() > 1){
+						cPos -= 100;
 				}
 				
-				if(cBack == false && (/*distance1 < 70 || */touchSensor.isPressed()/* && distance2 > 50*/)){
+				if(cBack == false && (touchSensor.isPressed()/* || distance2 < 100*/)){
 						reset.reset();
-						cPos = cat1.getCurrentPosition() - 1830;
+						cPos = cat1.getCurrentPosition();
 						cBack = true;
 				}
 		}
@@ -1170,15 +1197,15 @@ public static final String FINAL_C_KEY = "final_c";
 		 private void move(double xPos, double yPos, double hPos){
 
 
-				speed = Math.abs(Math.abs((hPos - targetA)) / 35 + .1);
+				speed = Math.abs(Math.abs((hPos - targetA)) / 35 + .15);
 				ySpeed = Math.abs(Math.abs((yPos - targetY)) / 35 + 0.2);
 				xSpeed = Math.abs(Math.abs((xPos - targetX)) / 35 + 0.2);
 				
-				if(rotationDegrees < targetA - 3){
+				if(hPos < targetA - 2){
 								rotate = -.3 * speed;
 								angleReached = false;
 		
-				}else if (rotationDegrees > targetA + 3){
+				}else if (hPos > targetA + 2){
 						rotate = 0.3 * speed;
 						angleReached = false;
 				}else{
@@ -1428,6 +1455,12 @@ public static final String FINAL_C_KEY = "final_c";
 						aprilId = detection.id;
 				}	 // end for() loop
 				
+					if(currentDetections.size() > 0){
+								detected = true;
+						}else if(currentDetections.size() <= 0){
+								detected = false;
+						}
+					
 					if(currentDetections.size() > 0){
 								detected = true;
 						}else if(currentDetections.size() <= 0){
